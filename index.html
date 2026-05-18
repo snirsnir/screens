@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechnoDa Screens Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">📺</div>
+      <div>
+        <div class="logo-title">TechnoDa</div>
+        <div class="logo-sub">ניהול מסכים</div>
+      </div>
+    </div>
+
+    <div class="sidebar-label">מסכים</div>
+    <nav id="screens-nav"></nav>
+
+    <div class="connection-badge" id="connection-badge">
+      <span class="dot"></span>
+      <span id="connection-text">מתחבר...</span>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main id="main">
+    <div id="welcome" class="welcome-screen">
+      <div class="welcome-icon">🖥️</div>
+      <h2>בחר מסך מהרשימה</h2>
+      <p>לחץ על אחד המסכים כדי לנהל את התוכן שלו</p>
+    </div>
+
+    <div id="screen-detail" class="hidden">
+      <!-- Screen header -->
+      <div class="detail-header">
+        <div>
+          <h1 id="detail-name"></h1>
+          <div class="detail-meta">
+            <span id="detail-dims" class="badge badge-blue"></span>
+            <span id="detail-orient" class="badge badge-gray"></span>
+            <span id="detail-updated" class="badge badge-muted"></span>
+          </div>
+        </div>
+        <div class="detail-header-end">
+          <div class="detail-status">
+            <span class="live-dot"></span>
+            <span>LIVE</span>
+          </div>
+          <div id="location-wrap" class="location-wrap hidden">
+            <img id="location-img" class="location-img" src="" alt="מיקום המסך">
+          </div>
+        </div>
+      </div>
+
+      <!-- Current content -->
+      <section class="section">
+        <div class="section-title">
+          <span>📡</span>
+          <span>מוקרן כעת</span>
+        </div>
+        <div id="current-content-card" class="current-card">
+          <div id="current-preview" class="current-preview">
+            <span class="no-content-icon">⬛</span>
+            <span id="no-content-text">אין תוכן מוגדר</span>
+          </div>
+          <div class="current-info">
+            <div class="current-type-badge" id="current-type-badge">—</div>
+            <div class="current-url" id="current-url">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Change content -->
+      <section class="section">
+        <div class="section-title">
+          <span>✏️</span>
+          <span>שינוי תוכן</span>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" data-tab="upload">העלאת קובץ</button>
+          <button class="tab" data-tab="url">קישור URL</button>
+        </div>
+
+        <!-- Upload tab -->
+        <div id="tab-upload" class="tab-panel">
+          <div id="drop-zone" class="drop-zone">
+            <div class="drop-icon">📁</div>
+            <div class="drop-title">גרור קובץ לכאן</div>
+            <div class="drop-sub">או לחץ לבחירה ידנית</div>
+            <div class="drop-types">תמונה (JPG, PNG, GIF, WebP) · סרטון (MP4, WebM) · PDF</div>
+            <input type="file" id="file-input" accept="image/*,video/*,application/pdf" hidden>
+          </div>
+
+          <div id="upload-preview" class="upload-preview hidden">
+            <div class="preview-media" id="preview-media-container"></div>
+            <div class="preview-info">
+              <div class="preview-filename" id="preview-filename"></div>
+              <div class="preview-filesize" id="preview-filesize"></div>
+            </div>
+            <button class="btn-clear" id="btn-clear-file">✕ נקה</button>
+          </div>
+
+          <div id="upload-progress" class="progress-wrap hidden">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text" id="progress-text">0%</div>
+          </div>
+        </div>
+
+        <!-- URL tab -->
+        <div id="tab-url" class="tab-panel hidden">
+          <div class="url-input-wrap">
+            <input type="url" id="url-input" placeholder="הדבק קישור YouTube, Google Drive, או כל אתר אינטרנט..." class="url-input">
+            <div class="url-type-indicator" id="url-type-indicator"></div>
+          </div>
+          <div id="url-preview" class="url-preview hidden">
+            <iframe id="url-preview-iframe" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+          </div>
+          <div id="url-error" class="url-error hidden">כתובת לא תקינה — חייבת להתחיל ב-https://</div>
+        </div>
+
+        <!-- Publish button -->
+        <button id="btn-publish" class="btn-publish" disabled>
+          <span id="publish-icon">🚀</span>
+          <span id="publish-text">שדר למסך</span>
+        </button>
+      </section>
+    </div>
+  </main>
+
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast hidden"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
