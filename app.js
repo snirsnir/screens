@@ -23,7 +23,7 @@ const SCREENS = [
   { id: 'outside_building',   name: 'מסך מחוץ למבנה הענק',      icon: '🏢', width: 288,  height: 432,  img: 'imgs/gadder.jpeg'   },
   { id: 'technoda_entrance',  name: 'מסך בכניסה לטכנודע',       icon: '🚪', width: 319,  height: 636,  img: 'imgs/outside.jpeg'  },
   { id: 'lobby',              name: 'מסך המבואה',                icon: '🏛️', width: 1920, height: 1080, img: 'imgs/mevoa.jpeg'    },
-  { id: 'reception',          name: 'מסך מתחת למשרד קבלה',      icon: '📋', width: 1920, height: 1080, img: 'imgs/reception.jpeg' },
+  { id: 'reception',          name: 'מסך מעל למשרד קבלה',      icon: '📋', width: 1920, height: 1080, img: 'imgs/reception.jpeg' },
 ];
 
 /* ─── State ─── */
