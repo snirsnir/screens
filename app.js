@@ -160,6 +160,7 @@ let libraryData      = {};
 let libPendingFile   = null;
 let selectedLibItems = [];   // ordered array of lib IDs for multi-select
 let scheduleEntries  = [];   // { time, content, label } working copy for current screen
+let savedTemplates   = {};
 
 /* ─── DOM refs — layout ─── */
 const screensNav     = document.getElementById('screens-nav');
@@ -222,7 +223,10 @@ const scheduleFromInput = document.getElementById('schedule-from-input');
 const scheduleToInput   = document.getElementById('schedule-to-input');
 const scheduleSelPrev   = document.getElementById('schedule-sel-preview');
 const btnAddEntry       = document.getElementById('btn-add-schedule-entry');
-const btnSaveSchedule   = document.getElementById('btn-save-schedule');
+const btnSaveSchedule        = document.getElementById('btn-save-schedule');
+const btnSaveTemplate        = document.getElementById('btn-save-template');
+const savedTemplatesSection  = document.getElementById('saved-templates-section');
+const savedTemplatesList     = document.getElementById('saved-templates-list');
 
 /* ─── DOM refs — publish ─── */
 const btnPublish  = document.getElementById('btn-publish');
@@ -916,6 +920,7 @@ function setPublishLoading(text) {
 ═══════════════════════════════════════════ */
 scheduleToggle.addEventListener('change', () => {
   scheduleBuilder.classList.toggle('hidden', !scheduleToggle.checked);
+  savedTemplatesSection.classList.toggle('hidden', !scheduleToggle.checked);
 });
 
 scheduleFromInput.addEventListener('input', updateAddEntryBtn);
@@ -1021,7 +1026,8 @@ function renderScheduleSummary(id) {
   currentSchedSummary.innerHTML = valid.map(e => {
     const [fh, fm] = e.from.split(':').map(Number);
     const [th, tm] = e.to.split(':').map(Number);
-    const isActive = nowMins >= (fh * 60 + fm) && nowMins < (th * 60 + tm);
+    const fMins = fh * 60 + fm, tMins = th * 60 + tm;
+    const isActive = fMins > tMins ? (nowMins >= fMins || nowMins < tMins) : (nowMins >= fMins && nowMins < tMins);
     const typeLabel = e.content.type === 'playlist'
       ? `📋 פלייליסט (${(e.content.items || []).length} פריטים)`
       : contentTypeLabel(e.content.type);
@@ -1116,6 +1122,100 @@ btnSaveSchedule.addEventListener('click', async () => {
     showToast('שגיאה בשמירת לו"ז: ' + err.message, 'error');
   }
 });
+
+/* ═══════════════════════════════════════════
+   Saved schedule templates
+═══════════════════════════════════════════ */
+onValue(ref(db, 'schedule_templates'), (snap) => {
+  savedTemplates = snap.val() || {};
+  renderSavedTemplates();
+});
+
+btnSaveTemplate.addEventListener('click', async () => {
+  if (!scheduleEntries.length) { showToast('אין תזמונים לשמירה', 'error'); return; }
+  const name = prompt('שם הלוז:');
+  if (!name?.trim()) return;
+  const id = `tpl_${Date.now()}`;
+  await set(ref(db, `schedule_templates/${id}`), {
+    name: name.trim(),
+    entries: scheduleEntries.map(e => ({ from: e.from, to: e.to, content: e.content, label: e.label })),
+    createdAt: Date.now(),
+  });
+  showToast(`לוז "${name.trim()}" נשמר ✓`, 'success');
+});
+
+function renderSavedTemplates() {
+  const keys = Object.keys(savedTemplates);
+  savedTemplatesSection.classList.toggle('hidden', !scheduleToggle.checked);
+  if (!keys.length) {
+    savedTemplatesList.innerHTML = '<div class="pl-empty" style="font-size:12px;">אין לוזים שמורים</div>';
+    return;
+  }
+  savedTemplatesList.innerHTML = keys
+    .sort((a, b) => (savedTemplates[b].createdAt || 0) - (savedTemplates[a].createdAt || 0))
+    .map(id => {
+      const tpl     = savedTemplates[id];
+      const entries = tpl.entries || [];
+      const ranges  = entries.map(e => `${e.from}–${e.to}`).join(' · ');
+      return `<div class="template-card">
+        <div class="template-info">
+          <div class="template-name">${escHtml(tpl.name)}</div>
+          <div class="template-summary">${entries.length} תזמונים · ${ranges}</div>
+        </div>
+        <div class="template-actions">
+          <button class="btn-apply-template" data-id="${id}">שגר</button>
+          <button class="btn-del-template" data-id="${id}" title="מחק">🗑️</button>
+        </div>
+      </div>`;
+    }).join('');
+
+  savedTemplatesList.querySelectorAll('.btn-apply-template').forEach(btn => {
+    btn.addEventListener('click', () => applyTemplate(btn.dataset.id));
+  });
+  savedTemplatesList.querySelectorAll('.btn-del-template').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await remove(ref(db, `schedule_templates/${btn.dataset.id}`));
+      showToast('לוז נמחק', 'success');
+    });
+  });
+}
+
+async function applyTemplate(id) {
+  if (!selectedScreenId) { showToast('בחר מסך תחילה', 'error'); return; }
+  const tpl = savedTemplates[id];
+  if (!tpl?.entries?.length) return;
+
+  // Validate: check that file-based content still exists in library
+  const missing = [];
+  for (const entry of tpl.entries) {
+    const content = entry.content;
+    if (!content) continue;
+    const items = content.type === 'playlist' ? (content.items || []) : [content];
+    for (const item of items) {
+      if (['image', 'video', 'pdf'].includes(item.type)) {
+        const found = Object.values(libraryData).some(l => l.url === item.url);
+        if (!found) missing.push(item.filename || item.url?.split('/').pop() || '?');
+      }
+    }
+  }
+
+  if (missing.length) {
+    showToast(`שגיאה — פריטים לא נמצאו בספרייה: ${missing.join(', ')}`, 'error');
+    return;
+  }
+
+  try {
+    await set(ref(db, `screens/${selectedScreenId}/schedule`),
+      tpl.entries.map(e => ({ from: e.from, to: e.to, content: e.content, label: e.label })));
+    scheduleEntries = tpl.entries.map(e => ({ ...e }));
+    renderScheduleList();
+    renderScheduleSummary(selectedScreenId);
+    renderTimeline(selectedScreenId);
+    showToast(`לוז "${tpl.name}" שוגר למסך ✓`, 'success');
+  } catch (err) {
+    showToast('שגיאה בשיגור: ' + err.message, 'error');
+  }
+}
 
 /* ═══════════════════════════════════════════
    Library management page
