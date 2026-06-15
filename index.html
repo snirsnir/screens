@@ -8,7 +8,49 @@
 </head>
 <body>
 
-<div id="app">
+<!-- Auth: login -->
+<div id="auth-overlay" class="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">📺</div>
+    <div class="auth-title">TechnoDa Screens</div>
+    <div class="auth-sub">ניהול מסכים — כניסה נדרשת</div>
+    <button id="btn-google-signin" class="btn-google-signin">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      היכנס עם Google
+    </button>
+    <div id="auth-error" class="auth-error hidden"></div>
+  </div>
+</div>
+
+<!-- Auth: not authorized -->
+<div id="not-auth-overlay" class="auth-overlay hidden">
+  <div class="auth-card">
+    <div class="auth-logo">🚫</div>
+    <div class="auth-title">אין הרשאה</div>
+    <div id="not-auth-msg" class="auth-sub"></div>
+    <button id="btn-signout-unauth" class="btn-signout-btn">התנתק</button>
+  </div>
+</div>
+
+<!-- Admin management modal -->
+<div id="admin-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span>👥 משתמשים מורשים</span>
+      <button id="btn-close-admin-modal" class="modal-close">✕</button>
+    </div>
+    <div id="admin-list" class="admin-list"></div>
+    <div class="admin-add-row" style="flex-direction:column;gap:8px;">
+      <div style="display:flex;gap:8px;">
+        <input type="text"  id="new-admin-name"  class="url-input" placeholder="שם מלא" style="direction:rtl;flex:1;">
+        <input type="email" id="new-admin-email" class="url-input" placeholder="Email" dir="ltr" style="flex:1;">
+      </div>
+      <button id="btn-add-admin" class="btn-publish" style="align-self:center;width:auto;padding:0 32px;">הוסף</button>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
 
   <!-- Sidebar -->
   <aside id="sidebar">
@@ -35,6 +77,16 @@
     <div class="connection-badge" id="connection-badge">
       <span class="dot"></span>
       <span id="connection-text">מתחבר...</span>
+    </div>
+
+    <div id="user-bar" class="user-bar hidden">
+      <img id="user-avatar" class="user-avatar" src="" alt="">
+      <div class="user-info">
+        <div id="user-name" class="user-name"></div>
+        <div id="user-email-display" class="user-email"></div>
+      </div>
+      <button id="btn-manage-admins" class="btn-user-action hidden" title="ניהול משתמשים">⚙️</button>
+      <button id="btn-signout" class="btn-user-action" title="התנתק">🚪</button>
     </div>
   </aside>
 

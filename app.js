@@ -1,6 +1,8 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, remove }
+import { getDatabase, ref, onValue, set, remove, get }
   from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
+  from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject }
   from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js';
 
@@ -14,9 +16,132 @@ const firebaseConfig = {
   appId:             '1:797589477913:web:9969b6514aaca29228e888',
   databaseURL:       'https://screens-6e2be-default-rtdb.europe-west1.firebasedatabase.app',
 };
-const app     = initializeApp(firebaseConfig);
-const db      = getDatabase(app);
-const storage = getStorage(app);
+const app      = initializeApp(firebaseConfig);
+const db       = getDatabase(app);
+const storage  = getStorage(app);
+const auth     = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+/* ─── Auth constants ─── */
+const SUPER_ADMIN  = 'papasnir@gmail.com';
+const emailToKey   = (e) => e.toLowerCase().replace(/\./g, ',');
+
+/* ─── Auth DOM refs ─── */
+const authOverlay      = document.getElementById('auth-overlay');
+const notAuthOverlay   = document.getElementById('not-auth-overlay');
+const notAuthMsg       = document.getElementById('not-auth-msg');
+const btnGoogleSignin  = document.getElementById('btn-google-signin');
+const authError        = document.getElementById('auth-error');
+const appEl            = document.getElementById('app');
+const userBar          = document.getElementById('user-bar');
+const userAvatar       = document.getElementById('user-avatar');
+const userNameEl       = document.getElementById('user-name');
+const userEmailDisplay = document.getElementById('user-email-display');
+const btnSignout       = document.getElementById('btn-signout');
+const btnSignoutUnauth = document.getElementById('btn-signout-unauth');
+const btnManageAdmins  = document.getElementById('btn-manage-admins');
+const adminModal       = document.getElementById('admin-modal');
+const adminListEl      = document.getElementById('admin-list');
+const newAdminName     = document.getElementById('new-admin-name');
+const newAdminEmail    = document.getElementById('new-admin-email');
+const btnAddAdmin      = document.getElementById('btn-add-admin');
+const btnCloseAdminModal = document.getElementById('btn-close-admin-modal');
+
+/* ─── Auth logic ─── */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    authOverlay.classList.remove('hidden');
+    notAuthOverlay.classList.add('hidden');
+    appEl.classList.add('hidden');
+    userBar.classList.add('hidden');
+    return;
+  }
+
+  const email = user.email.toLowerCase();
+
+  // Auto-register super admin on first sign-in
+  if (email === SUPER_ADMIN) {
+    await set(ref(db, `admins/${emailToKey(email)}`), {
+      email, name: user.displayName || '', addedAt: Date.now(),
+    });
+  }
+
+  const snap = await get(ref(db, `admins/${emailToKey(email)}`));
+  if (snap.exists()) {
+    authOverlay.classList.add('hidden');
+    notAuthOverlay.classList.add('hidden');
+    appEl.classList.remove('hidden');
+    userBar.classList.remove('hidden');
+    userAvatar.src           = user.photoURL || '';
+    userNameEl.textContent   = user.displayName || email;
+    userEmailDisplay.textContent = user.email;
+    if (email === SUPER_ADMIN) btnManageAdmins.classList.remove('hidden');
+  } else {
+    authOverlay.classList.add('hidden');
+    notAuthOverlay.classList.remove('hidden');
+    appEl.classList.add('hidden');
+    notAuthMsg.textContent = `${user.email} אינו מורשה לגשת למערכת`;
+  }
+});
+
+btnGoogleSignin.addEventListener('click', async () => {
+  authError.classList.add('hidden');
+  btnGoogleSignin.disabled = true;
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    authError.textContent = 'שגיאה בהתחברות';
+    authError.classList.remove('hidden');
+    btnGoogleSignin.disabled = false;
+  }
+});
+
+btnSignout.addEventListener('click',       () => signOut(auth));
+btnSignoutUnauth.addEventListener('click', () => signOut(auth));
+
+/* ─── Admin management ─── */
+btnManageAdmins.addEventListener('click', () => {
+  adminModal.classList.remove('hidden');
+  renderAdminList();
+});
+
+btnCloseAdminModal.addEventListener('click', () => adminModal.classList.add('hidden'));
+adminModal.addEventListener('click', (e) => { if (e.target === adminModal) adminModal.classList.add('hidden'); });
+
+async function renderAdminList() {
+  const snap   = await get(ref(db, 'admins'));
+  const admins = snap.val() || {};
+  const rows   = Object.entries(admins);
+  if (!rows.length) { adminListEl.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--muted);">אין משתמשים</div>'; return; }
+  adminListEl.innerHTML = rows.map(([key, val]) => `
+    <div class="admin-row">
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+        ${val.name ? `<span style="font-weight:600;">${escHtml(val.name)}</span>` : ''}
+        <span style="font-size:11px;color:var(--muted);direction:ltr;">${val.email || key.replace(/,/g,'.')}</span>
+      </div>
+      ${(val.email || '').toLowerCase() !== SUPER_ADMIN
+        ? `<button class="admin-del-btn" data-key="${key}">🗑️</button>`
+        : '<span class="admin-super-badge">ראשי</span>'}
+    </div>`).join('');
+  adminListEl.querySelectorAll('.admin-del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await remove(ref(db, `admins/${btn.dataset.key}`));
+      renderAdminList();
+      showToast('משתמש הוסר', 'success');
+    });
+  });
+}
+
+btnAddAdmin.addEventListener('click', async () => {
+  const email = newAdminEmail.value.trim().toLowerCase();
+  const name  = newAdminName.value.trim();
+  if (!email || !email.includes('@')) { showToast('אימייל לא תקין', 'error'); return; }
+  await set(ref(db, `admins/${emailToKey(email)}`), { email, name, addedAt: Date.now() });
+  newAdminEmail.value = '';
+  newAdminName.value  = '';
+  renderAdminList();
+  showToast('משתמש נוסף ✓', 'success');
+});
 
 /* ─── Screen definitions ─── */
 const SCREENS = [

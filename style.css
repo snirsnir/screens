@@ -960,3 +960,112 @@ body {
 
 /* ===== Utils ===== */
 .hidden { display: none !important; }
+
+/* ===== Auth overlay ===== */
+.auth-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,15,30,0.96);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(6px);
+}
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 52px 44px;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  min-width: 340px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+.auth-logo { font-size: 52px; line-height: 1; }
+.auth-title { font-size: 24px; font-weight: 700; color: var(--text); }
+.auth-sub   { font-size: 14px; color: var(--muted); }
+.btn-google-signin {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; color: #333;
+  border: 1px solid #d1d5db;
+  border-radius: 10px; padding: 11px 22px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  margin-top: 10px;
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+.btn-google-signin:hover  { box-shadow: 0 4px 14px rgba(0,0,0,0.25); transform: translateY(-1px); }
+.btn-google-signin:active { transform: translateY(0); }
+.btn-google-signin:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+.btn-google-signin img { width: 18px; height: 18px; }
+.auth-error { font-size: 12px; color: var(--danger); margin-top: 4px; }
+.btn-signout-btn {
+  background: var(--card); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 22px; font-size: 13px; cursor: pointer; margin-top: 8px;
+}
+.btn-signout-btn:hover { background: var(--border); }
+
+/* ===== User bar in sidebar ===== */
+.user-bar {
+  margin-top: auto;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.user-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%; object-fit: cover;
+  border: 1px solid var(--border); flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; overflow: hidden; }
+.user-name  { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-email { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-user-action {
+  background: none; border: none; cursor: pointer;
+  font-size: 15px; padding: 3px 4px; border-radius: 4px;
+  opacity: 0.6; transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.btn-user-action:hover { opacity: 1; }
+
+/* ===== Admin modal ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1500;
+}
+.modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px;
+  min-width: 380px; max-width: 460px; width: 90%;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px; font-size: 15px; font-weight: 600; color: var(--text);
+}
+.modal-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 18px; line-height: 1;
+  transition: color 0.15s;
+}
+.modal-close:hover { color: var(--text); }
+.admin-list {
+  margin-bottom: 16px; max-height: 240px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 8px; padding: 4px 0;
+}
+.admin-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; font-size: 13px; direction: ltr;
+}
+.admin-row + .admin-row { border-top: 1px solid var(--border); }
+.admin-del-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 14px; opacity: 0.6; transition: opacity 0.15s;
+}
+.admin-del-btn:hover { opacity: 1; }
+.admin-super-badge {
+  font-size: 10px; color: var(--success); font-weight: 700;
+  background: rgba(34,197,94,0.1); border-radius: 4px; padding: 2px 6px;
+}
+.admin-add-row { display: flex; gap: 8px; margin-top: 4px; }
