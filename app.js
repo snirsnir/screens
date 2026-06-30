@@ -158,9 +158,10 @@ let selectedFile     = null;
 let currentParsedUrl = null;
 let libraryData      = {};
 let libPendingFile   = null;
-let selectedLibItems = [];   // ordered array of lib IDs for multi-select
-let scheduleEntries  = [];   // { time, content, label } working copy for current screen
-let savedTemplates   = {};
+let selectedLibItems  = [];   // ordered array of lib IDs for multi-select
+let scheduleEntries   = [];   // { time, content, label } working copy for current screen
+let savedTemplates    = {};
+let importSelectedIds = [];   // IDs selected in import modal
 
 /* ─── DOM refs — layout ─── */
 const screensNav     = document.getElementById('screens-nav');
@@ -214,6 +215,15 @@ const libSelCount     = document.getElementById('lib-sel-count');
 const libSelClear     = document.getElementById('lib-sel-clear');
 const screenLibDurRow = document.getElementById('screen-lib-dur-row');
 const screenLibDur    = document.getElementById('screen-lib-dur');
+
+/* ─── DOM refs — import modal ─── */
+const importModal      = document.getElementById('import-modal');
+const importModalGrid  = document.getElementById('import-modal-grid');
+const importModalEmpty = document.getElementById('import-modal-empty');
+const importSelCount   = document.getElementById('import-sel-count');
+const btnImportMedia   = document.getElementById('btn-import-media');
+const btnCloseImport   = document.getElementById('btn-close-import-modal');
+const btnDoImport      = document.getElementById('btn-do-import');
 
 /* ─── DOM refs — schedule ─── */
 const scheduleToggle    = document.getElementById('schedule-toggle');
@@ -914,6 +924,131 @@ function setPublishLoading(text) {
   btnPublish.classList.add('loading');
   btnPublish.classList.remove('success');
 }
+
+/* ═══════════════════════════════════════════
+   Import from global library
+═══════════════════════════════════════════ */
+btnImportMedia.addEventListener('click', () => {
+  importSelectedIds = [];
+  renderImportModal();
+  importModal.classList.remove('hidden');
+});
+
+btnCloseImport.addEventListener('click', () => importModal.classList.add('hidden'));
+importModal.addEventListener('click', (e) => { if (e.target === importModal) importModal.classList.add('hidden'); });
+
+function renderImportModal() {
+  const existingUrls = new Set(
+    Object.values(libraryData)
+      .filter(item => item.screenId === selectedScreenId)
+      .map(item => item.url)
+  );
+
+  const ids = sortedLibIds().filter(id => {
+    const item = libraryData[id];
+    return item.screenId !== selectedScreenId && !existingUrls.has(item.url);
+  });
+
+  if (!ids.length) {
+    importModalGrid.innerHTML = '';
+    importModalEmpty.classList.remove('hidden');
+    btnDoImport.disabled = true;
+    updateImportSelCount();
+    return;
+  }
+  importModalEmpty.classList.add('hidden');
+
+  importModalGrid.innerHTML = ids.map(id => {
+    const item       = libraryData[id];
+    const screenName = screenNameById(item.screenId) || 'ספרייה';
+    return buildImportCard(id, item, screenName);
+  }).join('');
+
+  importModalGrid.querySelectorAll('.lib-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id  = card.dataset.id;
+      const idx = importSelectedIds.indexOf(id);
+      if (idx === -1) importSelectedIds.push(id);
+      else            importSelectedIds.splice(idx, 1);
+      updateImportCards();
+    });
+  });
+
+  updateImportCards();
+}
+
+function buildImportCard(id, item, screenName) {
+  let thumb;
+  switch (item.type) {
+    case 'image':
+      thumb = `<img src="${item.url}" alt="" loading="lazy">`; break;
+    case 'video':
+      thumb = `<video src="${item.url}" muted autoplay loop playsinline preload="auto"></video>`; break;
+    case 'youtube': {
+      const ytId = (item.url || '').match(YT_RX)?.[1] || '';
+      thumb = ytId ? `<img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="">` : `<span class="lib-type-icon">▶️</span>`;
+      break;
+    }
+    case 'drive':   thumb = `<span class="lib-type-icon">📁</span>`; break;
+    case 'webpage': thumb = `<span class="lib-type-icon">🌐</span>`; break;
+    default:        thumb = `<span class="lib-type-icon">📄</span>`;
+  }
+  return `<div class="lib-card selectable" data-id="${id}">
+    <div class="lib-thumb">${thumb}</div>
+    <div class="lib-info">
+      <div class="lib-desc" title="${escHtml(item.description)}">${escHtml(item.description)}</div>
+      <div class="lib-meta">${contentTypeLabel(item.type)} · ${escHtml(screenName)}</div>
+    </div>
+    <span class="lib-order-num"></span>
+  </div>`;
+}
+
+function updateImportCards() {
+  importModalGrid.querySelectorAll('.lib-card').forEach(card => {
+    const idx = importSelectedIds.indexOf(card.dataset.id);
+    card.classList.toggle('selected', idx !== -1);
+    const num = card.querySelector('.lib-order-num');
+    if (num) { num.textContent = idx !== -1 ? idx + 1 : ''; num.classList.toggle('visible', idx !== -1); }
+  });
+  updateImportSelCount();
+}
+
+function updateImportSelCount() {
+  importSelCount.textContent = `${importSelectedIds.length} נבחרו`;
+  btnDoImport.disabled = !importSelectedIds.length;
+}
+
+btnDoImport.addEventListener('click', async () => {
+  if (!importSelectedIds.length || !selectedScreenId) return;
+  btnDoImport.disabled = true;
+  btnDoImport.textContent = '⏳ מייבא...';
+  try {
+    let counter = 0;
+    for (const srcId of importSelectedIds) {
+      const item = libraryData[srcId];
+      if (!item) continue;
+      const newId = `lib_${Date.now()}_${counter++}`;
+      await set(ref(db, `library/${newId}`), {
+        type:        item.type,
+        url:         item.url,
+        embedUrl:    item.embedUrl || null,
+        filename:    item.filename || null,
+        description: item.description,
+        size:        item.size || 0,
+        screenId:    selectedScreenId,
+        createdAt:   Date.now(),
+      });
+    }
+    showToast(`${importSelectedIds.length} פריטים יובאו בהצלחה ✓`, 'success');
+    importModal.classList.add('hidden');
+    importSelectedIds = [];
+  } catch (err) {
+    showToast('שגיאה בייבוא: ' + err.message, 'error');
+  } finally {
+    btnDoImport.textContent = 'ייבא למסך';
+    btnDoImport.disabled = !importSelectedIds.length;
+  }
+});
 
 /* ═══════════════════════════════════════════
    Schedule

@@ -1109,3 +1109,13 @@ body {
   padding: 4px;
 }
 .btn-del-template:hover { opacity: 1; }
+
+/* ===== Import modal ===== */
+.import-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
