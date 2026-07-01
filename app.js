@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, remove, get }
+import { getDatabase, ref, onValue, set, remove, get, push }
   from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
   from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
@@ -142,10 +142,10 @@ const SCREENS = [
   { id: 'technoda_entrance', name: 'מסך בכניסה לטכנודע',  icon: '🚪', width: 319,  height: 636,  img: 'imgs/outside.jpeg'   },
   { id: 'lobby',             name: 'מסך המבואה',           icon: '🏛️', width: 1920, height: 1080, img: 'imgs/mevoa.jpeg'     },
   { id: 'reception',         name: 'מסך מעל למשרד קבלה',  icon: '📋', width: 1920, height: 1080, img: 'imgs/reception.jpeg' },
-  { id: 'lab_1_2',           name: 'מעל מעבדות 1-2',       icon: '🔬', width: 1920, height: 1080 },
-  { id: 'lab_3_4',           name: 'מעל מעבדות 3-4',       icon: '🔬', width: 1920, height: 1080 },
-  { id: 'lab_5_6',           name: 'מעל מעבדות 5-6',       icon: '🔬', width: 1920, height: 1080 },
-  { id: 'management',        name: 'מסך מנהלה',             icon: '👔', width: 3840, height: 2160 },
+  { id: 'lab_1_2',           name: 'מעל מעבדות 1-2',       icon: '🔬', width: 1920, height: 1080, img: 'imgs/1-2.jpeg'  },
+  { id: 'lab_3_4',           name: 'מעל מעבדות 3-4',       icon: '🔬', width: 1920, height: 1080, img: 'imgs/34.jpeg'   },
+  { id: 'lab_5_6',           name: 'מעל מעבדות 5-6',       icon: '🔬', width: 1920, height: 1080, img: 'imgs/5-6.jpeg'  },
+  { id: 'management',        name: 'מסך מנהלה',             icon: '👔', width: 3840, height: 2160, img: 'imgs/management.jpeg' },
 ];
 
 /* ─── State ─── */
@@ -341,25 +341,69 @@ function setConnection(ok) {
 /* ═══════════════════════════════════════════
    Sidebar nav
 ═══════════════════════════════════════════ */
+const LAB_IDS = ['lab_1_2', 'lab_3_4', 'lab_5_6'];
+let labsGroupOpen = false;
+
+function makeNavItem(screen) {
+  const content   = screensData[screen.id]?.content;
+  const typeLabel = content?.type ? contentTypeLabel(content.type) : 'ריק';
+  const item      = document.createElement('div');
+  item.className  = 'screen-nav-item' + (selectedScreenId === screen.id ? ' active' : '');
+  item.innerHTML  = `
+    <div class="nav-thumb">
+      <img src="${screen.img || ''}" alt="${screen.name}" onerror="this.parentElement.innerHTML='${screen.icon}'">
+    </div>
+    <div>
+      <div class="nav-name">${screen.name}</div>
+      <div class="nav-dims">${screen.width}×${screen.height}</div>
+      <div class="nav-type ${content ? '' : 'no-content'}">${typeLabel}</div>
+    </div>`;
+  item.addEventListener('click', () => selectScreen(screen.id));
+  return item;
+}
+
 function renderNav() {
   screensNav.innerHTML = '';
-  SCREENS.forEach(screen => {
-    const content   = screensData[screen.id]?.content;
-    const typeLabel = content?.type ? contentTypeLabel(content.type) : 'ריק';
-    const item      = document.createElement('div');
-    item.className  = 'screen-nav-item' + (selectedScreenId === screen.id ? ' active' : '');
-    item.innerHTML  = `
-      <div class="nav-thumb">
-        <img src="${screen.img}" alt="${screen.name}" onerror="this.parentElement.innerHTML='${screen.icon}'">
-      </div>
-      <div>
-        <div class="nav-name">${screen.name}</div>
-        <div class="nav-dims">${screen.width}×${screen.height}</div>
-        <div class="nav-type ${content ? '' : 'no-content'}">${typeLabel}</div>
-      </div>`;
-    item.addEventListener('click', () => selectScreen(screen.id));
-    screensNav.appendChild(item);
+
+  // Regular screens (not labs)
+  SCREENS.filter(s => !LAB_IDS.includes(s.id)).forEach(screen => {
+    screensNav.appendChild(makeNavItem(screen));
   });
+
+  // Labs group
+  const labScreens = SCREENS.filter(s => LAB_IDS.includes(s.id));
+  const anyLabActive = LAB_IDS.includes(selectedScreenId);
+  if (anyLabActive) labsGroupOpen = true;
+
+  const group = document.createElement('div');
+  group.className = 'nav-group';
+
+  const header = document.createElement('div');
+  header.className = 'nav-group-header' + (anyLabActive ? ' active' : '');
+  header.innerHTML = `
+    <span class="nav-group-icon">🔬</span>
+    <div class="nav-group-label">
+      <div class="nav-name">מסכים מעל המעבדות</div>
+      <div class="nav-dims">${labScreens.length} מסכים</div>
+    </div>
+    <span class="nav-group-arrow ${labsGroupOpen ? 'open' : ''}">›</span>`;
+  header.addEventListener('click', () => {
+    labsGroupOpen = !labsGroupOpen;
+    header.querySelector('.nav-group-arrow').classList.toggle('open', labsGroupOpen);
+    items.classList.toggle('open', labsGroupOpen);
+  });
+
+  const items = document.createElement('div');
+  items.className = 'nav-group-items' + (labsGroupOpen ? ' open' : '');
+  labScreens.forEach(screen => {
+    const el = makeNavItem(screen);
+    el.classList.add('nav-group-child');
+    items.appendChild(el);
+  });
+
+  group.appendChild(header);
+  group.appendChild(items);
+  screensNav.appendChild(group);
 }
 
 /* ═══════════════════════════════════════════
@@ -376,8 +420,147 @@ function selectScreen(id) {
   renderNav();
   renderScreenHeader(id);
   loadScheduleEntries(id);
+  // Show calendar button only for management screen
+  const calBtn = document.getElementById('wiz-btn-calendar');
+  if (id === 'management') calBtn.classList.remove('hidden');
+  else calBtn.classList.add('hidden');
   showWizStep('main');
 }
+
+/* ═══════════════════════════════════════════
+   Calendar management (management screen)
+═══════════════════════════════════════════ */
+(function initCalendarWizard() {
+  const calDateInput  = document.getElementById('cal-date');
+  const calEventsList = document.getElementById('cal-events-list');
+  const calTitle      = document.getElementById('cal-ev-title');
+  const calSub        = document.getElementById('cal-ev-sub');
+  const calImgUrl     = document.getElementById('cal-ev-img');
+  const calFile       = document.getElementById('cal-ev-file');
+  const calImgPrev    = document.getElementById('cal-img-preview');
+  const calImgEl      = document.getElementById('cal-img-preview-el');
+  const calAddBtn     = document.getElementById('cal-add-ev-btn');
+
+  // Default date = today
+  const todayStr = new Date().toISOString().slice(0, 10);
+  calDateInput.value = todayStr;
+
+  let calUnsubscribe = null;
+
+  // Re-render event list whenever step becomes active
+  const origShowWizStep = showWizStep;
+  // We'll hook into showWizStep to trigger calendar load
+  // (patched below after showWizStep is defined — see bottom of this IIFE)
+
+  function loadCalendarForDate(dateStr) {
+    if (calUnsubscribe) { calUnsubscribe(); calUnsubscribe = null; }
+    if (!dateStr) return;
+    calEventsList.innerHTML = '<div style="color:var(--muted);font-size:13px;">טוען...</div>';
+    const dbRef = ref(db, `management/calendar/${dateStr}`);
+    calUnsubscribe = onValue(dbRef, snap => {
+      calEventsList.innerHTML = '';
+      if (!snap.exists()) {
+        calEventsList.innerHTML = '<div style="color:var(--muted);font-size:13px;">אין אירועים לתאריך זה</div>';
+        return;
+      }
+      const entries = snap.val();
+      Object.entries(entries)
+        .sort(([,a],[,b]) => (a.order||0)-(b.order||0))
+        .forEach(([key, ev]) => {
+          const card = document.createElement('div');
+          card.style.cssText = 'background:var(--surface2);border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px;';
+          card.innerHTML = `
+            ${ev.imageUrl ? `<img src="${ev.imageUrl}" style="width:56px;height:40px;object-fit:cover;border-radius:5px;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:13px;">${ev.title||''}</div>
+              ${ev.subtitle ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">${ev.subtitle}</div>` : ''}
+            </div>
+            <button data-key="${key}" data-date="${dateStr}" class="cal-del-btn btn-clear" style="color:#ef4444;font-size:11px;padding:3px 7px;flex-shrink:0;">✕ מחק</button>`;
+          calEventsList.appendChild(card);
+        });
+
+      calEventsList.querySelectorAll('.cal-del-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('למחוק אירוע זה?')) return;
+          await remove(ref(db, `management/calendar/${btn.dataset.date}/${btn.dataset.key}`));
+          showToast('אירוע נמחק', 'success');
+        });
+      });
+    });
+  }
+
+  calDateInput.addEventListener('change', () => loadCalendarForDate(calDateInput.value));
+
+  // Enable add button only when title is filled
+  calTitle.addEventListener('input', () => {
+    calAddBtn.disabled = !calTitle.value.trim();
+  });
+
+  // Image file upload → Firebase Storage → fill URL input
+  calFile.addEventListener('change', async () => {
+    const file = calFile.files[0];
+    if (!file) return;
+    calAddBtn.disabled = true;
+    calAddBtn.querySelector('span:last-child').textContent = 'מעלה...';
+    try {
+      const path = `management-calendar/${Date.now()}_${file.name}`;
+      const snap  = await new Promise((res, rej) => {
+        const task = uploadBytesResumable(sRef(storage, path), file);
+        task.on('state_changed', null, rej, () => res(task.snapshot));
+      });
+      const url = await getDownloadURL(snap.ref);
+      calImgUrl.value = url;
+      calImgEl.src = url;
+      calImgPrev.style.display = 'block';
+    } catch(e) {
+      showToast('שגיאה בהעלאת תמונה: ' + e.message, 'error');
+    } finally {
+      calAddBtn.disabled = !calTitle.value.trim();
+      calAddBtn.querySelector('span:last-child').textContent = 'הוסף אירוע';
+    }
+  });
+
+  // Preview image URL as typed
+  calImgUrl.addEventListener('input', () => {
+    const v = calImgUrl.value.trim();
+    if (v) { calImgEl.src = v; calImgPrev.style.display = 'block'; }
+    else calImgPrev.style.display = 'none';
+  });
+
+  // Add event
+  calAddBtn.addEventListener('click', async () => {
+    const dateStr = calDateInput.value;
+    if (!dateStr || !calTitle.value.trim()) return;
+    calAddBtn.disabled = true;
+    calAddBtn.querySelector('span:last-child').textContent = 'שומר...';
+    try {
+      // Count existing events for order
+      const snap = await get(ref(db, `management/calendar/${dateStr}`));
+      const order = snap.exists() ? Object.keys(snap.val()).length : 0;
+      await push(ref(db, `management/calendar/${dateStr}`), {
+        title:    calTitle.value.trim(),
+        subtitle: calSub.value.trim() || null,
+        imageUrl: calImgUrl.value.trim() || null,
+        order,
+      });
+      calTitle.value = '';
+      calSub.value   = '';
+      calImgUrl.value = '';
+      calImgPrev.style.display = 'none';
+      calFile.value  = '';
+      showToast('אירוע נוסף ✓', 'success');
+    } catch(e) {
+      showToast('שגיאה: ' + e.message, 'error');
+    } finally {
+      calAddBtn.disabled = true;
+      calAddBtn.querySelector('span:last-child').textContent = 'הוסף אירוע';
+    }
+  });
+
+  // Hook: load calendar when calendar step is shown
+  const _origShowWizStep = showWizStep;
+  window._calendarStepHook = () => loadCalendarForDate(calDateInput.value);
+})();
 
 libraryNavItem.addEventListener('click', showLibraryPage);
 
@@ -396,11 +579,12 @@ function showLibraryPage() {
    Wizard
 ═══════════════════════════════════════════ */
 const WIZ_STEPS = {
-  'main':           { label: null,               back: null },
-  'current':        { label: 'מה משודר כרגע',   back: 'main' },
-  'broadcast-type': { label: 'שדר תוכן חדש',    back: 'main' },
-  'content':        { label: 'שידור תוכן חדש',  back: 'broadcast-type' },
-  'schedule':       { label: 'שידור לפי לו"ז',  back: 'broadcast-type' },
+  'main':           { label: null,                        back: null },
+  'current':        { label: 'מה משודר כרגע',            back: 'main' },
+  'broadcast-type': { label: 'שדר תוכן חדש',             back: 'main' },
+  'content':        { label: 'שידור תוכן חדש',           back: 'broadcast-type' },
+  'schedule':       { label: 'שידור לפי לו"ז',           back: 'broadcast-type' },
+  'calendar':       { label: 'לוח שנה מנהלה',            back: 'broadcast-type' },
 };
 
 function showWizStep(step) {
@@ -410,6 +594,7 @@ function showWizStep(step) {
   if (step === 'current')  renderCurrentView(selectedScreenId);
   if (step === 'content')  { renderWizLibGrid(); updateWizBroadcastBtn(); }
   if (step === 'schedule') { renderSchedLibGrid(); renderScheduleList(); }
+  if (step === 'calendar' && window._calendarStepHook) window._calendarStepHook();
 }
 
 function updateWizBreadcrumb(step) {
@@ -443,6 +628,7 @@ document.getElementById('wiz-btn-current').addEventListener('click', () => showW
 document.getElementById('wiz-btn-new-broadcast').addEventListener('click', () => showWizStep('broadcast-type'));
 document.getElementById('wiz-btn-content').addEventListener('click', () => showWizStep('content'));
 document.getElementById('wiz-btn-schedule').addEventListener('click', () => showWizStep('schedule'));
+document.getElementById('wiz-btn-calendar').addEventListener('click', () => showWizStep('calendar'));
 
 wizGotoLib.addEventListener('click', showLibraryPage);
 schedGotoLib.addEventListener('click', showLibraryPage);

@@ -225,11 +225,52 @@
             <div class="wiz-card-sub">בחר פריטים מהספרייה ושדר</div>
           </button>
           <button class="wiz-choice-card" id="wiz-btn-schedule">
-            <div class="wiz-card-icon">📅</div>
+            <div class="wiz-card-icon">🕐</div>
             <div class="wiz-card-title">שידור לפי לו"ז</div>
             <div class="wiz-card-sub">הגדר לוח זמנים לשידור</div>
           </button>
+          <button class="wiz-choice-card wiz-card-purple hidden" id="wiz-btn-calendar">
+            <div class="wiz-card-icon">📆</div>
+            <div class="wiz-card-title">לוח שנה מנהלה</div>
+            <div class="wiz-card-sub">נהל אירועים שבועיים למסך המנהלה</div>
+          </button>
         </div>
+      </div>
+
+      <!-- Step: Calendar management (management screen only) -->
+      <div id="wiz-calendar" class="wiz-step hidden">
+        <section class="section">
+          <div class="section-title"><span>📆</span><span>לוח שנה — מסך מנהלה</span></div>
+
+          <!-- Date picker -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <label style="font-weight:600;">תאריך:</label>
+            <input type="date" id="cal-date" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-size:14px;">
+          </div>
+
+          <!-- Existing events list -->
+          <div id="cal-events-list" style="margin-bottom:16px;display:flex;flex-direction:column;gap:10px;"></div>
+
+          <!-- Add event form -->
+          <div style="background:var(--surface2);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="font-weight:600;font-size:13px;color:var(--muted);">+ אירוע חדש</div>
+            <input type="text"  id="cal-ev-title" placeholder="כותרת *" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);font-size:14px;width:100%;">
+            <input type="text"  id="cal-ev-sub"   placeholder="תת כותרת (אופציונלי)" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);font-size:14px;width:100%;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="url" id="cal-ev-img"   placeholder="URL תמונה (אופציונלי)" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);font-size:14px;flex:1;">
+              <label class="btn-clear" style="cursor:pointer;padding:6px 10px;font-size:12px;" title="העלה תמונה">
+                📁 העלה
+                <input type="file" id="cal-ev-file" accept="image/*" style="display:none;">
+              </label>
+            </div>
+            <div id="cal-img-preview" style="display:none;margin-top:4px;">
+              <img id="cal-img-preview-el" style="max-height:80px;border-radius:6px;object-fit:cover;">
+            </div>
+            <button id="cal-add-ev-btn" class="btn-publish" style="margin-top:4px;" disabled>
+              <span>➕</span><span>הוסף אירוע</span>
+            </button>
+          </div>
+        </section>
       </div>
 
       <!-- Step: Content selection + broadcast -->

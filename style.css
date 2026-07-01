@@ -79,6 +79,38 @@ body {
   border-right-color: var(--accent);
 }
 
+/* ── Nav group (labs) ── */
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-right: 3px solid transparent;
+  user-select: none;
+}
+.nav-group-header:hover { background: rgba(59,130,246,0.08); }
+.nav-group-header.active { border-right-color: var(--accent); }
+.nav-group-icon { font-size: 18px; flex-shrink: 0; }
+.nav-group-label { flex: 1; }
+.nav-group-arrow {
+  font-size: 16px;
+  color: var(--muted);
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.nav-group-arrow.open { transform: rotate(90deg); }
+.nav-group-items {
+  display: none;
+  flex-direction: column;
+}
+.nav-group-items.open { display: flex; }
+.nav-group-child {
+  padding-right: 32px;
+  background: rgba(0,0,0,0.15);
+}
+
 .nav-icon { font-size: 20px; flex-shrink: 0; }
 .nav-name { font-size: 13px; font-weight: 500; color: var(--text); }
 .nav-dims { font-size: 10px; color: var(--muted); margin-top: 2px; }
@@ -1165,6 +1197,16 @@ body {
 }
 .wiz-card-green .wiz-card-icon,
 .wiz-card-green .wiz-card-title { color: #16a34a; }
+.wiz-card-purple {
+  border-color: #a855f7;
+}
+.wiz-card-purple:hover {
+  border-color: #9333ea !important;
+  background: rgba(168,85,247,0.07) !important;
+  box-shadow: 0 4px 16px rgba(168,85,247,0.15);
+}
+.wiz-card-purple .wiz-card-icon,
+.wiz-card-purple .wiz-card-title { color: #9333ea; }
 
 /* Wizard breadcrumb */
 .wizard-breadcrumb {
