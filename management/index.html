@@ -1,21 +1,267 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self' 'unsafe-inline' https: wss: data:; img-src * data: blob:; media-src * blob:; frame-src *;">
-  <title>מסך מנהלה</title>
+    content="default-src 'self' 'unsafe-inline' https: wss: data:; img-src * data: blob:; media-src * blob:;">
+  <title>לוח מנהלה</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
-    #container { width: 100vw; height: 100vh; position: relative; }
-    img, video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; }
-    iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    html, body {
+      width: 3840px; height: 2160px; overflow: hidden;
+      font-family: 'Segoe UI', 'Arial Hebrew', Arial, sans-serif;
+    }
+    body { background: url('../imgs/bg.png') center/cover no-repeat; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,20,0.74); }
+    .root {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      height: 2160px; padding: 60px 68px 52px;
+    }
+
+    /* ── Header ── */
+    .hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 48px; flex-shrink: 0;
+    }
+    .hdr-title { color: #fff; font-size: 72px; font-weight: 800; letter-spacing: -1px; }
+    .hdr-range { color: rgba(255,255,255,0.5); font-size: 44px; }
+    .hdr-brand { color: rgba(255,255,255,0.22); font-size: 32px; font-weight: 300; letter-spacing: 8px; }
+
+    /* ── Calendar ── */
+    .cal { display: flex; gap: 20px; flex: 1; min-height: 0; }
+
+    /* ── Day column ── */
+    .day {
+      flex: 1; display: flex; flex-direction: column;
+      border-radius: 26px; overflow: visible;
+      background: rgba(255,255,255,0.055);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      position: relative;
+      transition:
+        transform      0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background     0.5s ease,
+        border-color   0.5s ease,
+        box-shadow     0.5s ease;
+      transform-origin: bottom center;
+      /* clip overflow only on inner content, not shadow */
+      clip-path: none;
+    }
+    .day-inner {
+      display: flex; flex-direction: column; flex: 1; border-radius: 26px; overflow: hidden;
+    }
+    .day.shabbat { background: rgba(0,25,80,0.3); border-color: rgba(70,110,255,0.2); }
+
+    /* Today — always visually strong */
+    .day.today {
+      background: rgba(60,120,255,0.12);
+      border-color: rgba(96,165,250,0.6);
+      box-shadow: 0 0 100px rgba(60,100,255,0.1);
+    }
+
+    /* Spotlight pulse — cycles through days */
+    .day.spotlight {
+      transform: scaleY(1.018) scaleX(1.025);
+      background: rgba(255,255,255,0.13);
+      border-color: rgba(255,255,255,0.35);
+      box-shadow: 0 12px 60px rgba(0,0,0,0.4), 0 0 80px rgba(255,255,255,0.07);
+      z-index: 3;
+    }
+    .day.today.spotlight {
+      background: rgba(60,130,255,0.22);
+      border-color: rgba(96,165,250,0.9);
+      box-shadow: 0 12px 60px rgba(0,0,0,0.4), 0 0 120px rgba(80,140,255,0.2);
+    }
+
+    /* ── Day header ── */
+    .day-hdr {
+      padding: 30px 20px 24px; text-align: center; color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.09); flex-shrink: 0;
+      position: relative;
+    }
+
+    /* Today badge */
+    .today-badge {
+      display: none;
+      position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+      background: #3b82f6; color: #fff;
+      font-size: 22px; font-weight: 700; padding: 5px 22px;
+      border-radius: 20px; letter-spacing: 1px; white-space: nowrap;
+    }
+    .today .today-badge { display: block; }
+    .today .day-hdr { padding-top: 54px; }
+
+    .day-name {
+      font-size: 50px; font-weight: 800;
+      transition: color 0.4s;
+    }
+    .day-date {
+      font-size: 38px; margin-top: 10px; opacity: 0.5;
+      transition: opacity 0.4s, color 0.4s;
+    }
+    .today .day-name { color: #60a5fa; font-size: 54px; }
+    .today .day-date { opacity: 1; color: #93c5fd; font-size: 42px; }
+
+    /* Shimmer on today's header */
+    .today .day-hdr::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(110deg,
+        transparent 30%,
+        rgba(255,255,255,0.08) 50%,
+        transparent 70%);
+      background-size: 200% 100%;
+      animation: shimmer 3.5s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Events ── */
+    .events {
+      flex: 1; overflow: hidden; padding: 20px 16px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    /* ── Event card ── */
+    .ev {
+      background: rgba(255,255,255,0.09); border-radius: 16px;
+      overflow: hidden; flex-shrink: 0;
+      transition: background 0.4s;
+    }
+    .spotlight .ev { background: rgba(255,255,255,0.13); }
+    .ev-img  { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+    .ev-body { padding: 14px 18px 18px; }
+    .ev-title { font-size: 30px; font-weight: 700; color: #fff; line-height: 1.25; }
+    .ev-sub   { font-size: 24px; color: rgba(255,255,255,0.6); margin-top: 8px; line-height: 1.35; }
+    .no-ev    { color: rgba(255,255,255,0.14); font-size: 26px; text-align: center; margin-top: 44px; }
+
+    /* ── Clock & date in header ── */
+    .hdr-clock { color: rgba(255,255,255,0.7); font-size: 48px; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
-<div id="container"></div>
-<script type="module" src="../screen.js"></script>
+<div class="overlay"></div>
+<div class="root">
+  <div class="hdr">
+    <div class="hdr-title">לוח אירועים שבועי</div>
+    <div class="hdr-clock" id="clock"></div>
+    <div class="hdr-range" id="week-range"></div>
+    <div class="hdr-brand">TECHNODA</div>
+  </div>
+  <div class="cal" id="cal"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
+import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js';
+
+const app = initializeApp({
+  apiKey:            'AIzaSyDqZ50JZvva8IJ_OMrEWnY9qdCCTyrT4Oo',
+  authDomain:        'screens-6e2be.firebaseapp.com',
+  projectId:         'screens-6e2be',
+  storageBucket:     'screens-6e2be.firebasestorage.app',
+  messagingSenderId: '797589477913',
+  appId:             '1:797589477913:web:9969b6514aaca29228e888',
+  databaseURL:       'https://screens-6e2be-default-rtdb.europe-west1.firebasedatabase.app',
+});
+const db = getDatabase(app);
+
+const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+function getWeekDays() {
+  const t = new Date(); t.setHours(0,0,0,0);
+  const sun = new Date(t); sun.setDate(t.getDate() - t.getDay());
+  return Array.from({length:7}, (_,i) => { const d=new Date(sun); d.setDate(sun.getDate()+i); return d; });
+}
+const pad     = n => String(n).padStart(2,'0');
+const fmtDate = d => `${pad(d.getDate())}.${pad(d.getMonth()+1)}`;
+const dateKey = d => d.toISOString().slice(0,10);
+
+const days     = getWeekDays();
+const todayKey = dateKey(new Date());
+
+document.getElementById('week-range').textContent =
+  `${fmtDate(days[0])} – ${fmtDate(days[6])}.${days[6].getFullYear()}`;
+
+// ── Live clock ──
+const clockEl = document.getElementById('clock');
+function updateClock() {
+  const n = new Date();
+  clockEl.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// ── Build columns ──
+const cal    = document.getElementById('cal');
+const evAreas = {};
+const cols   = [];
+
+days.forEach((d, i) => {
+  const key      = dateKey(d);
+  const isToday  = key === todayKey;
+  const isSat    = i === 6;
+
+  const col = document.createElement('div');
+  col.className = 'day' + (isToday ? ' today' : '') + (isSat ? ' shabbat' : '');
+  col.dataset.idx = i;
+
+  col.innerHTML = `
+    <div class="day-inner">
+      <div class="day-hdr">
+        ${isToday ? '<div class="today-badge">היום</div>' : ''}
+        <div class="day-name">${DAY_NAMES[i]}</div>
+        <div class="day-date">${fmtDate(d)}</div>
+      </div>
+      <div class="events" id="ev-${key}"></div>
+    </div>`;
+
+  cal.appendChild(col);
+  cols.push(col);
+  evAreas[key] = col.querySelector('.events');
+});
+
+// ── Firebase listeners ──
+days.forEach(d => {
+  const key = dateKey(d);
+  onValue(ref(db, `management/calendar/${key}`), snap => {
+    const area = evAreas[key];
+    area.innerHTML = '';
+    if (!snap.exists()) { area.innerHTML = '<div class="no-ev">—</div>'; return; }
+    const evs = Object.values(snap.val()).sort((a,b) => (a.order||0)-(b.order||0));
+    evs.forEach(ev => {
+      const el = document.createElement('div');
+      el.className = 'ev';
+      el.innerHTML =
+        (ev.imageUrl ? `<img class="ev-img" src="${ev.imageUrl}" onerror="this.style.display='none'">` : '') +
+        `<div class="ev-body">` +
+        (ev.title    ? `<div class="ev-title">${ev.title}</div>`  : '') +
+        (ev.subtitle ? `<div class="ev-sub">${ev.subtitle}</div>` : '') +
+        `</div>`;
+      area.appendChild(el);
+    });
+  });
+});
+
+// ── Spotlight pulse — cycles through columns every 3.5 s ──
+let spotIdx = days.findIndex((d, i) => dateKey(d) === todayKey);
+if (spotIdx < 0) spotIdx = 0;
+
+function nextSpotlight() {
+  cols.forEach(c => c.classList.remove('spotlight'));
+  cols[spotIdx].classList.add('spotlight');
+  spotIdx = (spotIdx + 1) % cols.length;
+}
+nextSpotlight();
+setInterval(nextSpotlight, 3500);
+
+// ── Reload at midnight ──
+const now      = new Date();
+const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+setTimeout(() => location.reload(), midnight - now);
+</script>
 </body>
 </html>
