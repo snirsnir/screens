@@ -47,10 +47,66 @@
       </div>
       <button id="btn-add-admin" class="btn-publish" style="align-self:center;width:auto;padding:0 32px;">הוסף</button>
     </div>
+
+    <!-- Update section -->
+    <div style="border-top:1px solid var(--border);margin:16px 0 12px;"></div>
+    <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;">🔄 עדכון גרסה</div>
+    <div id="update-status-list" style="margin-bottom:12px;display:flex;flex-direction:column;gap:6px;"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <input type="text" id="upd-ver" class="url-input" placeholder="גרסה חדשה — למשל 1.0.1" style="direction:ltr;">
+      <div id="upd-drop-area" style="border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;font-size:13px;transition:border-color 0.2s;">
+        📦 גרור קובץ <b>app.asar</b> לכאן — או לחץ לבחירה
+        <div id="upd-file-info" style="font-size:11px;color:var(--accent);margin-top:4px;"></div>
+        <input type="file" id="upd-file-input" accept=".asar" hidden>
+      </div>
+      <div id="upd-progress-wrap" class="progress-wrap hidden">
+        <div class="progress-bar"><div class="progress-fill" id="upd-progress-fill"></div></div>
+        <div class="progress-text" id="upd-progress-text">0%</div>
+      </div>
+      <button id="btn-publish-update" class="btn-publish" disabled style="align-self:center;width:auto;padding:0 32px;">🚀 פרסם עדכון</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import from global library modal -->
+<div id="import-modal" class="modal-overlay hidden">
+  <div class="modal-card" style="max-width:700px;width:95%;padding:0;">
+    <div class="modal-header" style="padding:16px 20px;">
+      <span>📥 ייבא מספריית המדיה</span>
+      <button id="btn-close-import-modal" class="modal-close">✕</button>
+    </div>
+    <div id="import-modal-empty" class="pl-empty hidden" style="margin:24px;">אין פריטים לייבוא</div>
+    <div id="import-modal-grid" class="lib-grid" style="max-height:420px;overflow-y:auto;padding:16px;gap:10px;"></div>
+    <div class="import-modal-footer">
+      <span id="import-sel-count" style="font-size:13px;color:var(--muted);">0 נבחרו</span>
+      <button id="btn-do-import" class="btn-publish" style="width:auto;padding:0 28px;margin:0;" disabled>ייבא למסך</button>
+    </div>
+  </div>
+</div>
+
+<!-- Remap screens modal -->
+<div id="remap-modal" class="modal-overlay hidden">
+  <div class="modal-card" style="max-width:400px;width:95%;">
+    <div class="modal-header">
+      <span>🗂️ שייך למסכים</span>
+      <button id="btn-close-remap-modal" class="modal-close">✕</button>
+    </div>
+    <div id="remap-item-info" style="padding:0 4px 12px;font-size:13px;color:var(--muted);"></div>
+    <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">בחר מסכים:</div>
+    <div id="remap-screen-checks" class="lib-screen-checkboxes" style="margin-bottom:16px;"></div>
+    <div style="display:flex;justify-content:center;padding-top:8px;border-top:1px solid var(--border);">
+      <button id="btn-save-remap" class="btn-publish" style="width:auto;padding:0 32px;">שמור</button>
+    </div>
   </div>
 </div>
 
 <div id="app" class="hidden">
+
+  <!-- Mobile header — visible only on small screens -->
+  <div id="mobile-header" class="mobile-header">
+    <button id="btn-sidebar-toggle" class="btn-sidebar-toggle">☰</button>
+    <div class="mobile-logo-text">📺 TechnoDa</div>
+  </div>
 
   <!-- Sidebar -->
   <aside id="sidebar">
@@ -70,7 +126,7 @@
       <span class="nav-icon">📚</span>
       <div>
         <div class="nav-name">ספריית מדיה</div>
-        <div class="nav-dims" id="library-count">0 פריטים</div>
+        <div class="nav-dims" id="library-count">טוען...</div>
       </div>
     </div>
 
@@ -98,7 +154,9 @@
       <p>לחץ על אחד המסכים כדי לנהל את התוכן שלו</p>
     </div>
 
+    <!-- Screen detail — Wizard -->
     <div id="screen-detail" class="hidden">
+
       <!-- Screen header -->
       <div class="detail-header">
         <div>
@@ -120,142 +178,153 @@
         </div>
       </div>
 
-      <!-- Current content -->
-      <section class="section">
-        <div class="section-title">
-          <span>📡</span>
-          <span>מוקרן כעת</span>
-        </div>
-        <div id="current-schedule-summary" class="schedule-summary hidden"></div>
-        <div id="timeline-24h" class="timeline-24h hidden"></div>
-        <div id="current-content-card" class="current-card">
-          <div id="current-preview" class="current-preview">
-            <span class="no-content-icon">⬛</span>
-            <span id="no-content-text">אין תוכן מוגדר</span>
-          </div>
-          <div class="current-info">
-            <div class="current-type-badge" id="current-type-badge">—</div>
-            <div class="current-url" id="current-url">—</div>
-            <div id="current-schedule-badge" class="current-schedule-badge hidden"></div>
-          </div>
-        </div>
-      </section>
+      <!-- Wizard breadcrumb -->
+      <div id="wizard-breadcrumb" class="wizard-breadcrumb hidden"></div>
 
-      <!-- Change content -->
-      <section class="section">
-        <div class="section-title">
-          <span>✏️</span>
-          <span>שינוי תוכן</span>
+      <!-- Step: Main choice -->
+      <div id="wiz-main" class="wiz-step">
+        <div class="wiz-choice-grid">
+          <button class="wiz-choice-card wiz-card-green" id="wiz-btn-new-broadcast">
+            <div class="wiz-card-icon">+</div>
+            <div class="wiz-card-title">שדר תוכן חדש</div>
+            <div class="wiz-card-sub">בחר תוכן ושדר למסך</div>
+          </button>
+          <button class="wiz-choice-card" id="wiz-btn-current">
+            <div class="wiz-card-icon">📡</div>
+            <div class="wiz-card-title">מה משודר כרגע</div>
+            <div class="wiz-card-sub">צפה בתוכן הנוכחי ובלו"ז</div>
+          </button>
         </div>
+      </div>
 
-        <!-- Tabs -->
-        <div class="tabs main-tabs">
-          <button class="tab active" data-tab="upload">העלאת קובץ</button>
-          <button class="tab" data-tab="url">קישור URL</button>
-          <button class="tab" data-tab="library">📡 שידור למסך</button>
-        </div>
-
-        <!-- Upload tab -->
-        <div id="tab-upload" class="tab-panel">
-          <div id="drop-zone" class="drop-zone">
-            <div class="drop-icon">📁</div>
-            <div class="drop-title">גרור קובץ לכאן</div>
-            <div class="drop-sub">או לחץ לבחירה ידנית</div>
-            <div class="drop-types">תמונה (JPG, PNG, GIF, WebP) · סרטון (MP4, WebM) · PDF</div>
-            <input type="file" id="file-input" accept="image/*,video/*,application/pdf" hidden>
-          </div>
-
-          <div id="upload-preview" class="upload-preview hidden">
-            <div class="preview-media" id="preview-media-container"></div>
-            <div class="preview-info">
-              <div class="preview-filename" id="preview-filename"></div>
-              <div class="preview-filesize" id="preview-filesize"></div>
-              <input type="text" id="upload-description" class="lib-desc-input"
-                     placeholder="תיאור (חובה)" maxlength="80" autocomplete="off">
+      <!-- Step: Current content -->
+      <div id="wiz-current" class="wiz-step hidden">
+        <section class="section">
+          <div class="section-title"><span>📡</span><span>מוקרן כרגע</span></div>
+          <div id="current-schedule-summary" class="schedule-summary hidden"></div>
+          <div id="timeline-24h" class="timeline-24h hidden"></div>
+          <div id="current-content-card" class="current-card">
+            <div id="current-preview" class="current-preview">
+              <span class="no-content-icon">⬛</span>
             </div>
-            <button class="btn-clear" id="btn-clear-file">✕ נקה</button>
-          </div>
-
-          <div id="upload-progress" class="progress-wrap hidden">
-            <div class="progress-bar">
-              <div class="progress-fill" id="progress-fill"></div>
+            <div class="current-info">
+              <div class="current-type-badge" id="current-type-badge">—</div>
+              <div class="current-url" id="current-url">—</div>
+              <div id="current-schedule-badge" class="current-schedule-badge hidden"></div>
             </div>
-            <div class="progress-text" id="progress-text">0%</div>
           </div>
-        </div>
+        </section>
+      </div>
 
-        <!-- URL tab -->
-        <div id="tab-url" class="tab-panel hidden">
-          <div class="url-input-wrap">
-            <input type="url" id="url-input" placeholder="הדבק קישור YouTube, Google Drive, או כל אתר אינטרנט..." class="url-input">
-            <div class="url-type-indicator" id="url-type-indicator"></div>
-          </div>
-          <div id="url-preview" class="url-preview hidden">
-            <iframe id="url-preview-iframe" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
-          </div>
-          <div id="url-error" class="url-error hidden">כתובת לא תקינה — חייבת להתחיל ב-https://</div>
-          <div id="url-desc-wrap" class="hidden" style="margin-top:10px;">
-            <input type="text" id="url-description" class="url-input" style="direction:rtl;"
-                   placeholder="תיאור (חובה)" maxlength="80" autocomplete="off">
-          </div>
+      <!-- Step: Broadcast type choice -->
+      <div id="wiz-broadcast-type" class="wiz-step hidden">
+        <div class="wiz-choice-grid">
+          <button class="wiz-choice-card" id="wiz-btn-content">
+            <div class="wiz-card-icon">📋</div>
+            <div class="wiz-card-title">שידור תוכן חדש</div>
+            <div class="wiz-card-sub">בחר פריטים מהספרייה ושדר</div>
+          </button>
+          <button class="wiz-choice-card" id="wiz-btn-schedule">
+            <div class="wiz-card-icon">📅</div>
+            <div class="wiz-card-title">שידור לפי לו"ז</div>
+            <div class="wiz-card-sub">הגדר לוח זמנים לשידור</div>
+          </button>
         </div>
+      </div>
 
-        <!-- Library / Broadcast tab -->
-        <div id="tab-library" class="tab-panel hidden">
+      <!-- Step: Content selection + broadcast -->
+      <div id="wiz-content" class="wiz-step hidden">
+        <section class="section">
+          <div class="section-title"><span>📋</span><span>בחר תוכן לשידור</span></div>
           <div class="lib-sel-info">
-            <span id="lib-sel-count" style="font-size:13px;color:var(--muted);">0 נבחרו</span>
-            <button id="lib-sel-clear" class="btn-clear" style="padding:4px 10px;font-size:11px;">נקה הכל</button>
-            <button id="btn-import-media" class="btn-clear" style="padding:4px 10px;font-size:11px;margin-right:auto;">📥 ייבא מהמדיה</button>
+            <span id="wiz-sel-count" style="font-size:13px;color:var(--muted);">0 נבחרו</span>
+            <button id="wiz-sel-clear" class="btn-clear" style="padding:4px 10px;font-size:11px;">נקה הכל</button>
+            <button id="wiz-btn-import" class="btn-clear" style="padding:4px 10px;font-size:11px;margin-right:auto;">📥 ייבא מהמדיה</button>
           </div>
-          <div id="screen-lib-empty" class="pl-empty">הספרייה ריקה — הוסף תכנים בלשוניות ״העלאה״ או ״קישור״</div>
-          <div id="screen-lib-grid" class="lib-grid lib-selectable-grid"></div>
-          <div id="screen-lib-dur-row" class="duration-row hidden" style="margin-top:12px;">
+          <div id="wiz-lib-empty" class="pl-empty hidden">
+            הספרייה ריקה עבור מסך זה —
+            <span class="lib-goto-link" id="wiz-goto-lib">גש לספריית המדיה</span>
+            להעלאת תכנים
+          </div>
+          <div id="wiz-lib-grid" class="lib-grid lib-selectable-grid"></div>
+          <div id="wiz-dur-row" class="duration-row hidden" style="margin-top:12px;">
             <label>משך הצגה לתמונות / אתרים:</label>
-            <input type="number" id="screen-lib-dur" class="duration-input" value="10" min="1" max="3600">
+            <input type="number" id="wiz-dur" class="duration-input" value="10" min="1" max="3600">
             <span>שניות</span>
           </div>
 
-          <!-- Schedule section -->
-          <div class="schedule-section">
-            <div class="schedule-toggle-row">
-              <span class="schedule-toggle-label">📅 תזמון תכנים</span>
+          <!-- Delayed broadcast -->
+          <div class="delayed-section">
+            <div class="schedule-toggle-row" style="margin-top:14px;">
+              <span class="schedule-toggle-label">📅 שדר מאוחר יותר</span>
               <label class="toggle-switch">
-                <input type="checkbox" id="schedule-toggle">
+                <input type="checkbox" id="delayed-toggle">
                 <span class="toggle-slider"></span>
               </label>
             </div>
-            <div id="schedule-builder" class="hidden">
-              <div id="schedule-list" class="schedule-list"></div>
-              <div class="schedule-add-row">
-                <span class="schedule-range-label">מ</span>
-                <input type="time" id="schedule-from-input" class="schedule-time-input">
-                <span class="schedule-range-label">עד</span>
-                <input type="time" id="schedule-to-input" class="schedule-time-input">
-                <span id="schedule-sel-preview" class="schedule-sel-preview">בחר פריטים מהגריד</span>
-                <button id="btn-add-schedule-entry" class="btn-add-entry" disabled>+ הוסף</button>
+            <div id="delayed-builder" class="hidden">
+              <div class="delayed-row">
+                <label class="delayed-label">התחלה:</label>
+                <input type="datetime-local" id="delayed-start" class="delayed-input">
               </div>
-              <button id="btn-save-schedule" class="btn-publish" style="margin-top:10px;background:var(--success);">
-                <span>💾</span><span>שמור לו"ז</span>
-              </button>
-              <button id="btn-save-template" class="btn-publish" style="margin-top:8px;background:var(--accent);">
-                <span>📌</span><span>שמור כתבנית לוז</span>
-              </button>
+              <div class="delayed-row">
+                <label class="delayed-label" style="display:flex;align-items:center;gap:6px;">
+                  <input type="checkbox" id="delayed-has-end"> סיום:
+                </label>
+                <input type="datetime-local" id="delayed-end" class="delayed-input" disabled>
+              </div>
+              <div class="delayed-note">בשעת הסיום הלו"ז הרגיל יחזור לפעולה</div>
             </div>
           </div>
 
-          <!-- Saved schedule templates -->
-          <div id="saved-templates-section" class="saved-templates-section hidden">
+          <button id="wiz-btn-do-broadcast" class="btn-publish" disabled style="margin-top:14px;">
+            <span id="wiz-broadcast-icon">📡</span>
+            <span id="wiz-broadcast-text">שדר למסך</span>
+          </button>
+        </section>
+      </div>
+
+      <!-- Step: Schedule builder -->
+      <div id="wiz-schedule" class="wiz-step hidden">
+        <section class="section">
+          <div class="section-title"><span>📅</span><span>שידור לפי לו"ז</span></div>
+          <div class="lib-sel-info">
+            <span id="sched-sel-count" style="font-size:13px;color:var(--muted);">0 נבחרו</span>
+            <button id="sched-sel-clear" class="btn-clear" style="padding:4px 10px;font-size:11px;">נקה הכל</button>
+          </div>
+          <div id="sched-lib-empty" class="pl-empty hidden">
+            הספרייה ריקה עבור מסך זה —
+            <span class="lib-goto-link" id="sched-goto-lib">גש לספריית המדיה</span>
+          </div>
+          <div id="sched-lib-grid" class="lib-grid lib-selectable-grid"></div>
+          <div id="sched-dur-row" class="duration-row hidden" style="margin-top:12px;">
+            <label>משך הצגה לתמונות / אתרים:</label>
+            <input type="number" id="sched-dur" class="duration-input" value="10" min="1" max="3600">
+            <span>שניות</span>
+          </div>
+
+          <div id="schedule-list" class="schedule-list" style="margin-top:12px;"></div>
+          <div class="schedule-add-row">
+            <span class="schedule-range-label">מ</span>
+            <input type="time" id="schedule-from-input" class="schedule-time-input">
+            <span class="schedule-range-label">עד</span>
+            <input type="time" id="schedule-to-input" class="schedule-time-input">
+            <span id="schedule-sel-preview" class="schedule-sel-preview">בחר פריטים מהגריד</span>
+            <button id="btn-add-schedule-entry" class="btn-add-entry" disabled>+ הוסף</button>
+          </div>
+          <button id="btn-save-schedule" class="btn-publish" style="margin-top:10px;background:var(--success);">
+            <span>💾</span><span>שמור לו"ז</span>
+          </button>
+          <button id="btn-save-template" class="btn-publish" style="margin-top:8px;background:var(--accent);">
+            <span>📌</span><span>שמור כתבנית לוז</span>
+          </button>
+          <div id="saved-templates-section" class="saved-templates-section">
             <div class="saved-templates-title">📋 לוזים שמורים</div>
             <div id="saved-templates-list"></div>
           </div>
-        </div>
+        </section>
+      </div>
 
-        <!-- Action button -->
-        <button id="btn-publish" class="btn-publish" disabled>
-          <span id="publish-icon">📚</span>
-          <span id="publish-text">שמור בספרייה</span>
-        </button>
-      </section>
     </div>
 
     <!-- Library management page -->
@@ -272,29 +341,54 @@
 
       <!-- Upload section -->
       <section class="section">
-        <div class="section-title"><span>⬆️</span><span>העלאה לספרייה</span></div>
+        <div class="section-title"><span>⬆️</span><span>הוספה לספרייה</span></div>
 
-        <div id="lib-drop-zone" class="drop-zone">
-          <div class="drop-icon">📁</div>
-          <div class="drop-title">גרור קובץ לכאן</div>
-          <div class="drop-sub">או לחץ לבחירה ידנית</div>
-          <div class="drop-types">תמונה (JPG, PNG, WebP) · סרטון (MP4, WebM) · PDF</div>
-          <input type="file" id="lib-file-input" accept="image/*,video/*,application/pdf" hidden>
+        <div class="tabs lib-upload-tabs" style="margin-bottom:12px;">
+          <button class="tab active" data-libtab="file">📁 קובץ</button>
+          <button class="tab" data-libtab="url">🔗 קישור URL</button>
         </div>
 
-        <div id="lib-upload-preview" class="upload-preview hidden">
-          <div class="preview-media" id="lib-preview-media"></div>
-          <div class="preview-info">
-            <div class="preview-filename" id="lib-preview-filename"></div>
-            <div class="preview-filesize" id="lib-preview-filesize"></div>
-            <input type="text" id="lib-description" class="lib-desc-input" placeholder="תיאור (חובה)" maxlength="80" autocomplete="off">
+        <!-- File tab -->
+        <div id="lib-tab-file">
+          <div id="lib-drop-zone" class="drop-zone">
+            <div class="drop-icon">📁</div>
+            <div class="drop-title">גרור קובץ לכאן</div>
+            <div class="drop-sub">או לחץ לבחירה ידנית</div>
+            <div class="drop-types">תמונה (JPG, PNG, WebP) · סרטון (MP4, WebM) · PDF</div>
+            <input type="file" id="lib-file-input" accept="image/*,video/*,application/pdf" hidden>
           </div>
-          <button class="btn-clear" id="lib-btn-clear">✕</button>
+          <div id="lib-upload-preview" class="upload-preview hidden">
+            <div class="preview-media" id="lib-preview-media"></div>
+            <div class="preview-info">
+              <div class="preview-filename" id="lib-preview-filename"></div>
+              <div class="preview-filesize" id="lib-preview-filesize"></div>
+              <input type="text" id="lib-description" class="lib-desc-input" placeholder="תיאור (חובה)" maxlength="80" autocomplete="off">
+            </div>
+            <button class="btn-clear" id="lib-btn-clear">✕</button>
+          </div>
+          <div id="lib-progress-wrap" class="progress-wrap hidden">
+            <div class="progress-bar"><div class="progress-fill" id="lib-progress-fill"></div></div>
+            <div class="progress-text" id="lib-progress-text">0%</div>
+          </div>
         </div>
 
-        <div id="lib-progress-wrap" class="progress-wrap hidden">
-          <div class="progress-bar"><div class="progress-fill" id="lib-progress-fill"></div></div>
-          <div class="progress-text" id="lib-progress-text">0%</div>
+        <!-- URL tab -->
+        <div id="lib-tab-url" class="hidden">
+          <div class="url-input-wrap">
+            <input type="url" id="lib-url-input" placeholder="הדבק קישור YouTube, Google Drive, או כל אתר אינטרנט..." class="url-input">
+            <div class="url-type-indicator" id="lib-url-type-indicator"></div>
+          </div>
+          <div id="lib-url-error" class="url-error hidden">כתובת לא תקינה — חייבת להתחיל ב-https://</div>
+          <div id="lib-url-desc-wrap" class="hidden" style="margin-top:10px;">
+            <input type="text" id="lib-url-description" class="url-input" style="direction:rtl;"
+                   placeholder="תיאור (חובה)" maxlength="80" autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Screen assignment -->
+        <div id="lib-screen-assign" class="lib-screen-assign hidden">
+          <div class="lib-assign-label">שייך למסכים:</div>
+          <div id="lib-screen-checkboxes" class="lib-screen-checkboxes"></div>
         </div>
 
         <button id="lib-btn-upload" class="btn-publish" disabled style="margin-top:12px;">
@@ -302,11 +396,11 @@
         </button>
       </section>
 
-      <!-- Items grid -->
+      <!-- Items organized by screen -->
       <section class="section">
         <div class="section-title"><span>🗂️</span><span>תוכן שמור</span></div>
-        <div id="lib-page-empty" class="pl-empty">הספרייה ריקה — העלה קבצים למעלה</div>
-        <div id="lib-grid" class="lib-grid"></div>
+        <div id="lib-page-empty" class="pl-empty hidden">הספרייה ריקה — הוסף תכנים למעלה</div>
+        <div id="lib-by-screens"></div>
       </section>
 
     </div>
@@ -314,25 +408,25 @@
 
 </div>
 
-<!-- Import from global library modal -->
-<div id="import-modal" class="modal-overlay hidden">
-  <div class="modal-card" style="max-width:700px;width:95%;padding:0;">
-    <div class="modal-header" style="padding:16px 20px;">
-      <span>📥 ייבא מספריית המדיה</span>
-      <button id="btn-close-import-modal" class="modal-close">✕</button>
-    </div>
-    <div id="import-modal-empty" class="pl-empty hidden" style="margin:24px;">אין פריטים לייבוא</div>
-    <div id="import-modal-grid" class="lib-grid" style="max-height:420px;overflow-y:auto;padding:16px;gap:10px;"></div>
-    <div class="import-modal-footer">
-      <span id="import-sel-count" style="font-size:13px;color:var(--muted);">0 נבחרו</span>
-      <button id="btn-do-import" class="btn-publish" style="width:auto;padding:0 28px;margin:0;" disabled>ייבא למסך</button>
-    </div>
-  </div>
-</div>
+<div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
 <!-- Toast notification -->
 <div id="toast" class="toast hidden"></div>
 
 <script type="module" src="app.js"></script>
+<script>
+  (function () {
+    const toggle   = document.getElementById('btn-sidebar-toggle');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    const sidebar  = document.getElementById('sidebar');
+    const close    = () => document.body.classList.remove('sidebar-open');
+    toggle?.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+    backdrop?.addEventListener('click', close);
+    sidebar?.addEventListener('click', e => {
+      if (window.innerWidth <= 640 && e.target.closest('.screen-nav-item, .library-nav-item'))
+        close();
+    });
+  })();
+</script>
 </body>
 </html>
