@@ -240,18 +240,6 @@
       <!-- Step: Calendar management (management screen only) -->
       <div id="wiz-calendar" class="wiz-step hidden">
 
-        <!-- Activate banner -->
-        <div class="cal-activate-banner">
-          <div class="cal-activate-banner-text">
-            <div class="cal-activate-banner-title">📺 לוח שנה על המסך</div>
-            <div class="cal-activate-banner-sub">לחץ להפעלה — לוח השנה יוצג על מסך המנהלה</div>
-          </div>
-          <button id="cal-activate-btn" class="cal-activate-btn">
-            <span id="cal-activate-icon">📡</span>
-            <span id="cal-activate-text">הפעל עכשיו</span>
-          </button>
-        </div>
-
         <!-- Date picker card -->
         <div class="cal-date-card">
           <div class="cal-date-label">📅 בחר תאריך לעריכה</div>
@@ -278,6 +266,18 @@
             <img id="cal-img-preview-el" class="cal-img-preview-img">
           </div>
           <button id="cal-add-ev-btn" class="cal-add-btn" disabled>הוסף אירוע</button>
+        </div>
+
+        <!-- Activate banner — at bottom, status-aware -->
+        <div id="cal-activate-banner" class="cal-activate-banner cal-activate-banner--off">
+          <div class="cal-activate-banner-text">
+            <div class="cal-activate-banner-title" id="cal-banner-title">📺 לוח שנה על המסך</div>
+            <div class="cal-activate-banner-sub"   id="cal-banner-sub">בודק סטטוס...</div>
+          </div>
+          <button id="cal-activate-btn" class="cal-activate-btn">
+            <span id="cal-activate-icon">📡</span>
+            <span id="cal-activate-text">הפעל עכשיו</span>
+          </button>
         </div>
 
       </div>

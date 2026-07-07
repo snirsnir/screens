@@ -1522,10 +1522,21 @@ body.sidebar-open .sidebar-backdrop {
 /* Activate banner */
 .cal-activate-banner {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  border-radius: 14px; padding: 18px 20px; margin-top: 16px;
+  transition: background 0.4s, box-shadow 0.4s;
+}
+/* Not active — blue, button visible */
+.cal-activate-banner--off {
   background: linear-gradient(135deg, #1d4ed8 0%, #4f46e5 100%);
-  border-radius: 14px; padding: 18px 20px; margin-bottom: 16px;
   box-shadow: 0 4px 20px rgba(29,78,216,0.35);
 }
+.cal-activate-banner--off .cal-activate-btn { display: flex; }
+/* Active — green, button hidden */
+.cal-activate-banner--on {
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  box-shadow: 0 4px 20px rgba(21,128,61,0.35);
+}
+.cal-activate-banner--on .cal-activate-btn { display: none; }
 .cal-activate-banner-text { flex: 1; }
 .cal-activate-banner-title {
   font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 4px;

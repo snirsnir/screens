@@ -581,6 +581,28 @@ function selectScreen(id) {
     }
   });
 
+  // ── Banner: live status from Firebase ──
+  const banner    = document.getElementById('cal-activate-banner');
+  const bannerTitle = document.getElementById('cal-banner-title');
+  const bannerSub   = document.getElementById('cal-banner-sub');
+
+  onValue(ref(db, 'screens/management/content'), snap => {
+    const content = snap.exists() ? snap.val() : null;
+    const isCalActive = content && content.type === 'url' &&
+      (content.url || '').includes('management');
+
+    banner.classList.toggle('cal-activate-banner--on',  isCalActive);
+    banner.classList.toggle('cal-activate-banner--off', !isCalActive);
+
+    if (isCalActive) {
+      bannerTitle.textContent = '✅ לוח שנה על המסך';
+      bannerSub.textContent   = 'מופעל כעת — הלוח מוצג על מסך המנהלה';
+    } else {
+      bannerTitle.textContent = '📺 לוח שנה על המסך';
+      bannerSub.textContent   = 'לחץ להפעלה — לוח השנה יוצג על מסך המנהלה';
+    }
+  });
+
   // Hook: load calendar when calendar step is shown
   window._calendarStepHook = () => loadCalendarForDate(calDateInput.value);
 })();
