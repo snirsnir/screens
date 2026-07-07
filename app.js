@@ -455,27 +455,26 @@ function selectScreen(id) {
   function loadCalendarForDate(dateStr) {
     if (calUnsubscribe) { calUnsubscribe(); calUnsubscribe = null; }
     if (!dateStr) return;
-    calEventsList.innerHTML = '<div style="color:var(--muted);font-size:13px;">טוען...</div>';
+    calEventsList.innerHTML = '<div class="cal-empty-msg">טוען...</div>';
     const dbRef = ref(db, `management/calendar/${dateStr}`);
     calUnsubscribe = onValue(dbRef, snap => {
       calEventsList.innerHTML = '';
       if (!snap.exists()) {
-        calEventsList.innerHTML = '<div style="color:var(--muted);font-size:13px;">אין אירועים לתאריך זה</div>';
+        calEventsList.innerHTML = '<div class="cal-empty-msg">אין אירועים לתאריך זה</div>';
         return;
       }
-      const entries = snap.val();
-      Object.entries(entries)
+      Object.entries(snap.val())
         .sort(([,a],[,b]) => (a.order||0)-(b.order||0))
         .forEach(([key, ev]) => {
           const card = document.createElement('div');
-          card.style.cssText = 'background:var(--surface2);border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px;';
-          card.innerHTML = `
-            ${ev.imageUrl ? `<img src="${ev.imageUrl}" style="width:56px;height:40px;object-fit:cover;border-radius:5px;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
-            <div style="flex:1;min-width:0;">
-              <div style="font-weight:600;font-size:13px;">${ev.title||''}</div>
-              ${ev.subtitle ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">${ev.subtitle}</div>` : ''}
-            </div>
-            <button data-key="${key}" data-date="${dateStr}" class="cal-del-btn btn-clear" style="color:#ef4444;font-size:11px;padding:3px 7px;flex-shrink:0;">✕ מחק</button>`;
+          card.className = 'cal-event-card';
+          card.innerHTML =
+            (ev.imageUrl ? `<img class="cal-event-thumb" src="${ev.imageUrl}" onerror="this.style.display='none'">` : '') +
+            `<div class="cal-event-info">
+               <div class="cal-event-title">${ev.title||''}</div>
+               ${ev.subtitle ? `<div class="cal-event-sub">${ev.subtitle}</div>` : ''}
+             </div>
+             <button data-key="${key}" data-date="${dateStr}" class="cal-del-btn cal-event-del">✕ מחק</button>`;
           calEventsList.appendChild(card);
         });
 
@@ -511,7 +510,7 @@ function selectScreen(id) {
       const url = await getDownloadURL(snap.ref);
       calImgUrl.value = url;
       calImgEl.src = url;
-      calImgPrev.style.display = 'block';
+      calImgPrev.classList.remove('hidden');
     } catch(e) {
       showToast('שגיאה בהעלאת תמונה: ' + e.message, 'error');
     } finally {
@@ -523,8 +522,8 @@ function selectScreen(id) {
   // Preview image URL as typed
   calImgUrl.addEventListener('input', () => {
     const v = calImgUrl.value.trim();
-    if (v) { calImgEl.src = v; calImgPrev.style.display = 'block'; }
-    else calImgPrev.style.display = 'none';
+    if (v) { calImgEl.src = v; calImgPrev.classList.remove('hidden'); }
+    else calImgPrev.classList.add('hidden');
   });
 
   // Add event
@@ -546,7 +545,7 @@ function selectScreen(id) {
       calTitle.value = '';
       calSub.value   = '';
       calImgUrl.value = '';
-      calImgPrev.style.display = 'none';
+      calImgPrev.classList.add('hidden');
       calFile.value  = '';
       showToast('אירוע נוסף ✓', 'success');
     } catch(e) {
