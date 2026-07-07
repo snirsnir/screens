@@ -1593,7 +1593,6 @@ body.sidebar-open .sidebar-backdrop {
 /* ── Day-of-week header row ── */
 .cal-dow-row {
   display: grid; grid-template-columns: repeat(7,1fr);
-  direction: ltr;
   gap: 3px; margin-bottom: 3px;
 }
 .cal-dow-row > div {
@@ -1604,7 +1603,6 @@ body.sidebar-open .sidebar-backdrop {
 /* ── Calendar grid ── */
 .cal-grid {
   display: grid; grid-template-columns: repeat(7,1fr);
-  direction: ltr;
   gap: 3px; margin-bottom: 14px;
 }
 .cal-day {
