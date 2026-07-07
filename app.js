@@ -527,6 +527,7 @@ function selectScreen(id) {
       const chip = document.createElement('div');
       chip.className = 'cal-day-chip';
       chip.title = ev.subtitle || '';
+      chip.draggable = true;
       chip.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${ev.title||''}</span>
         <button class="cal-day-chip-del" data-key="${evKey}" data-date="${key}" title="מחק">✕</button>`;
       chip.querySelector('.cal-day-chip-del').addEventListener('click', async e => {
@@ -535,9 +536,29 @@ function selectScreen(id) {
         await remove(ref(db, `management/calendar/${key}/${evKey}`));
         showToast('אירוע נמחק', 'success');
       });
+      chip.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', JSON.stringify({ fromKey: key, evKey, ev }));
+        chip.classList.add('dragging');
+      });
+      chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
       chips.appendChild(chip);
     });
     cell.appendChild(chips);
+
+    // Drag-and-drop: accept drops onto this cell
+    cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('drag-over'); });
+    cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+    cell.addEventListener('drop', async e => {
+      e.preventDefault();
+      cell.classList.remove('drag-over');
+      let payload;
+      try { payload = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { return; }
+      if (!payload || payload.fromKey === key || otherMonth) return;
+      const { fromKey, evKey: dragEvKey, ev: dragEv } = payload;
+      await remove(ref(db, `management/calendar/${fromKey}/${dragEvKey}`));
+      await push(ref(db, `management/calendar/${key}`), dragEv);
+      showToast('אירוע הועבר ✓', 'success');
+    });
 
     // "+" add button
     const addBtn = document.createElement('button');
