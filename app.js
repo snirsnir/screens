@@ -449,7 +449,8 @@ function selectScreen(id) {
                      'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
   const pad     = n => String(n).padStart(2,'0');
   const dateKey = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
-  const todayKey = new Date().toISOString().slice(0,10);
+  const _td = new Date();
+  const todayKey = `${_td.getFullYear()}-${pad(_td.getMonth()+1)}-${pad(_td.getDate())}`;
 
   const calGrid      = document.getElementById('cal-grid');
   const monthLabel   = document.getElementById('cal-month-label');

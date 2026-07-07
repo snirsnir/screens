@@ -308,7 +308,7 @@ const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי',
 
 const pad     = n => String(n).padStart(2,'0');
 const fmtDate = d => `${pad(d.getDate())}.${pad(d.getMonth()+1)}`;
-const dateKey = d => d.toISOString().slice(0,10);
+const dateKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
 function getWeekStart(offset = 0) {
   const t = new Date(); t.setHours(0,0,0,0);
