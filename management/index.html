@@ -5,190 +5,200 @@
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self' 'unsafe-inline' https: wss: data:; img-src * data: blob:; media-src * blob:;">
   <title>לוח מנהלה</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      width: 3840px; height: 2160px; overflow: hidden;
-      font-family: 'Segoe UI', 'Arial Hebrew', Arial, sans-serif;
-    }
-    body { background: url('../imgs/bg.png') center/cover no-repeat; }
 
-    /* Lighter overlay — lets bg breathe */
+    html, body {
+      width: 100vw; height: 100vh; overflow: hidden;
+      font-family: 'Rubik', 'Arial Hebrew', Arial, sans-serif;
+    }
+
+    body {
+      background: url('../imgs/bg.png') center / cover no-repeat;
+      /* Bright light overlay — washes background to airy white */
+      background-color: #ddeeff;
+    }
+
+    /* Very subtle white haze so text is readable but background shines through */
     .overlay {
       position: fixed; inset: 0;
-      background: rgba(0,4,20,0.58);
+      background: rgba(255,255,255,0.38);
     }
 
-    /* Ambient glow layer */
-    .overlay::after {
-      content: '';
-      position: absolute; inset: 0;
-      background:
-        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(30,80,200,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 50% 35% at 80% 90%, rgba(80,20,180,0.14) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
+    /* ── Root ── */
     .root {
       position: relative; z-index: 1;
       display: flex; flex-direction: column;
-      height: 2160px;
-      /* Large safe-zone padding — fixes TV overscan */
-      padding: 130px 140px 110px;
+      height: 100vh;
+      padding: 3.2vh 3.2vw 2.8vh;
     }
 
-    /* ── Header ── */
+    /* ══════════ HEADER ══════════ */
     .hdr {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 56px; flex-shrink: 0;
+      margin-bottom: 1.4vh; flex-shrink: 0;
     }
+
     .hdr-title {
-      font-size: 80px; font-weight: 900; letter-spacing: -1px;
-      background: linear-gradient(90deg, #fff 0%, #93c5fd 60%, #818cf8 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 2.6vw; font-weight: 900; letter-spacing: -0.05vw;
+      color: #1e3a5f;
     }
-    .hdr-center { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .hdr-clock  { color: rgba(255,255,255,0.9); font-size: 60px; font-variant-numeric: tabular-nums; font-weight: 700; }
-    .hdr-range  { color: rgba(255,255,255,0.45); font-size: 38px; }
-    .hdr-brand  { color: rgba(255,255,255,0.28); font-size: 34px; font-weight: 300; letter-spacing: 10px; }
 
-    /* Thin glowing separator under header */
+    .hdr-center { display: flex; flex-direction: column; align-items: center; gap: 0.2vh; }
+
+    .hdr-clock {
+      font-size: 2.4vw; font-weight: 700; color: #1e3a5f;
+      font-variant-numeric: tabular-nums; letter-spacing: 0.1vw;
+    }
+    .hdr-date { font-size: 1.05vw; font-weight: 400; color: #5a7fa8; }
+
+    .hdr-brand {
+      font-size: 1vw; font-weight: 300; letter-spacing: 0.4vw;
+      color: rgba(30,58,95,0.4);
+    }
+
+    /* Separator */
     .hdr-sep {
-      height: 2px; margin-bottom: 40px; flex-shrink: 0;
+      height: 0.15vh; margin-bottom: 1.4vh; flex-shrink: 0; border-radius: 2px;
       background: linear-gradient(90deg,
-        transparent 0%,
-        rgba(99,179,237,0.5) 20%,
-        rgba(167,139,250,0.6) 50%,
-        rgba(99,179,237,0.5) 80%,
-        transparent 100%);
-      border-radius: 2px;
+        transparent,
+        rgba(59,130,246,0.6) 20%,
+        rgba(139,92,246,0.7) 50%,
+        rgba(59,130,246,0.6) 80%,
+        transparent);
     }
 
-    /* ── Calendar ── */
-    .cal { display: flex; gap: 22px; flex: 1; min-height: 0; }
+    /* ══════════ CALENDAR ══════════ */
+    .cal { display: flex; gap: 0.7vw; flex: 1; min-height: 0; }
 
-    /* ── Day column ── */
+    /* ══════════ DAY COLUMN ══════════ */
     .day {
       flex: 1; display: flex; flex-direction: column;
-      border-radius: 28px; overflow: visible;
-      background: rgba(255,255,255,0.085);
-      border: 1.5px solid rgba(255,255,255,0.16);
-      box-shadow: 0 4px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
-      position: relative;
+      border-radius: 1.4vw; overflow: visible; position: relative;
+      /* Bright frosted glass */
+      background: rgba(255,255,255,0.72);
+      border: 0.08vw solid rgba(255,255,255,0.95);
+      box-shadow: 0 0.4vh 2vw rgba(30,58,95,0.12), inset 0 0.05vh 0 rgba(255,255,255,1);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
       transition:
-        transform      0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
-        background     0.5s ease,
-        border-color   0.5s ease,
-        box-shadow     0.5s ease;
+        transform    0.75s cubic-bezier(0.34,1.56,0.64,1),
+        background   0.5s ease,
+        border-color 0.5s ease,
+        box-shadow   0.5s ease;
       transform-origin: bottom center;
     }
     .day-inner {
       display: flex; flex-direction: column; flex: 1;
-      border-radius: 28px; overflow: hidden;
+      border-radius: calc(1.4vw - 0.08vw); overflow: hidden;
     }
 
+    /* Shabbat */
     .day.shabbat {
-      background: rgba(20,40,120,0.25);
-      border-color: rgba(99,130,255,0.3);
+      background: rgba(224,231,255,0.75);
+      border-color: rgba(165,180,252,0.7);
     }
 
     /* Today */
     .day.today {
-      background: rgba(59,130,246,0.15);
-      border-color: rgba(99,165,250,0.7);
-      box-shadow: 0 0 120px rgba(59,120,255,0.18), 0 4px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+      background: rgba(37,99,235,0.88);
+      border-color: rgba(96,165,250,0.9);
+      box-shadow: 0 0 4vw rgba(37,99,235,0.3), 0 0.4vh 2vw rgba(0,0,0,0.15), inset 0 0.05vh 0 rgba(255,255,255,0.4);
     }
 
-    /* Spotlight pulse */
+    /* Spotlight */
     .day.spotlight {
-      transform: scaleY(1.02) scaleX(1.028);
-      background: rgba(255,255,255,0.14);
-      border-color: rgba(255,255,255,0.42);
-      box-shadow: 0 16px 80px rgba(0,0,0,0.45), 0 0 100px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.2);
+      transform: scaleY(1.022) scaleX(1.03);
+      background: rgba(255,255,255,0.9);
+      border-color: rgba(255,255,255,1);
+      box-shadow: 0 1.5vh 4vw rgba(30,58,95,0.2), 0 0 3vw rgba(255,255,255,0.5), inset 0 0.05vh 0 rgba(255,255,255,1);
       z-index: 3;
     }
     .day.today.spotlight {
-      background: rgba(59,140,255,0.25);
-      border-color: rgba(99,165,250,0.95);
-      box-shadow: 0 16px 80px rgba(0,0,0,0.4), 0 0 160px rgba(80,140,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+      background: rgba(37,99,235,0.95);
+      border-color: #fff;
+      box-shadow: 0 1.5vh 4vw rgba(0,0,0,0.2), 0 0 5vw rgba(59,130,246,0.4), inset 0 0.05vh 0 rgba(255,255,255,0.5);
     }
 
-    /* ── Day header ── */
+    /* ══════════ DAY HEADER ══════════ */
     .day-hdr {
-      padding: 32px 24px 26px; text-align: center; color: #fff;
-      background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
-      border-bottom: 1px solid rgba(255,255,255,0.12); flex-shrink: 0;
+      padding: 1.6vh 1.3vw 1.2vh; text-align: center;
+      border-bottom: 0.05vw solid rgba(30,58,95,0.1); flex-shrink: 0;
       position: relative;
+      background: rgba(255,255,255,0.35);
+    }
+    .today .day-hdr {
+      border-bottom-color: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.1);
     }
 
     /* Today badge */
     .today-badge {
       display: none;
-      position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
-      background: linear-gradient(90deg, #2563eb, #3b82f6);
-      color: #fff; font-size: 24px; font-weight: 800;
-      padding: 6px 26px; border-radius: 20px; letter-spacing: 1px; white-space: nowrap;
-      box-shadow: 0 4px 20px rgba(59,130,246,0.5);
+      position: absolute; top: 0.7vh; left: 50%; transform: translateX(-50%);
+      background: #fff; color: #1d4ed8;
+      font-size: 0.75vw; font-weight: 800;
+      padding: 0.25vh 1.2vw; border-radius: 3vw; white-space: nowrap;
+      box-shadow: 0 0.2vh 1vw rgba(29,78,216,0.35);
     }
     .today .today-badge { display: block; }
-    .today .day-hdr { padding-top: 62px; }
+    .today .day-hdr     { padding-top: 3.2vh; }
 
     .day-name {
-      font-size: 54px; font-weight: 900; color: rgba(255,255,255,0.92);
+      font-size: 1.6vw; font-weight: 900; color: #1e3a5f;
       transition: color 0.4s;
     }
     .day-date {
-      font-size: 40px; margin-top: 10px; color: rgba(255,255,255,0.45);
+      font-size: 1.15vw; font-weight: 400; margin-top: 0.3vh; color: #7a9abf;
       transition: color 0.4s;
     }
-    .today .day-name { color: #60a5fa; font-size: 58px; }
-    .today .day-date { color: #93c5fd; font-size: 44px; }
+    .today .day-name { color: #fff; font-size: 1.7vw; }
+    .today .day-date { color: rgba(255,255,255,0.8); font-size: 1.2vw; }
 
     /* Shimmer */
     .today .day-hdr::after {
-      content: '';
-      position: absolute; inset: 0;
+      content: ''; position: absolute; inset: 0; pointer-events: none;
       background: linear-gradient(110deg,
-        transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+        transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
       background-size: 200% 100%;
-      animation: shimmer 3.5s ease-in-out infinite;
-      pointer-events: none;
+      animation: shimmer 4s ease-in-out infinite;
     }
     @keyframes shimmer {
       0%   { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
 
-    /* ── Events area ── */
+    /* ══════════ EVENTS ══════════ */
     .events {
-      flex: 1; overflow: hidden; padding: 22px 18px;
-      display: flex; flex-direction: column; gap: 18px;
+      flex: 1; overflow: hidden; padding: 1.1vh 0.8vw;
+      display: flex; flex-direction: column; gap: 0.9vh;
     }
 
-    /* ── Event card ── */
     .ev {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 18px; overflow: hidden; flex-shrink: 0;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.2);
-      transition: background 0.4s, border-color 0.4s;
+      background: rgba(255,255,255,0.6);
+      border: 0.05vw solid rgba(30,58,95,0.1);
+      border-radius: 0.8vw; overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 0.15vh 0.8vw rgba(30,58,95,0.08);
+      transition: background 0.4s;
     }
-    .spotlight .ev {
-      background: rgba(255,255,255,0.16);
-      border-color: rgba(255,255,255,0.28);
+    .today .ev {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.35);
     }
-    .ev-img  { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
-    .ev-body { padding: 16px 20px 20px; }
-    .ev-title {
-      font-size: 32px; font-weight: 800; color: #fff; line-height: 1.25;
-    }
-    .ev-sub {
-      font-size: 26px; color: rgba(255,255,255,0.65); margin-top: 10px; line-height: 1.35;
-    }
-    .no-ev {
-      color: rgba(255,255,255,0.18); font-size: 28px; text-align: center; margin-top: 50px;
-    }
+    .spotlight .ev { background: rgba(255,255,255,0.75); }
+
+    .ev-img   { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+    .ev-body  { padding: 0.7vh 0.9vw 0.9vh; }
+    .ev-title { font-size: 0.95vw; font-weight: 700; color: #1e3a5f; line-height: 1.3; }
+    .today .ev-title { color: #fff; }
+    .ev-sub   { font-size: 0.8vw; font-weight: 400; color: #5a7fa8; margin-top: 0.4vh; line-height: 1.4; }
+    .today .ev-sub { color: rgba(255,255,255,0.8); }
+
+    .no-ev { font-size: 0.85vw; color: rgba(30,58,95,0.2); text-align: center; margin-top: 3vh; }
+    .today .no-ev { color: rgba(255,255,255,0.3); }
   </style>
 </head>
 <body>
@@ -197,8 +207,8 @@
   <div class="hdr">
     <div class="hdr-title">לוח אירועים שבועי</div>
     <div class="hdr-center">
-      <div class="hdr-clock" id="clock"></div>
-      <div class="hdr-range" id="week-range"></div>
+      <div class="hdr-clock" id="clock">00:00</div>
+      <div class="hdr-date"  id="week-range"></div>
     </div>
     <div class="hdr-brand">TECHNODA</div>
   </div>
@@ -226,7 +236,9 @@ const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי',
 function getWeekDays() {
   const t = new Date(); t.setHours(0,0,0,0);
   const sun = new Date(t); sun.setDate(t.getDate() - t.getDay());
-  return Array.from({length:7}, (_,i) => { const d=new Date(sun); d.setDate(sun.getDate()+i); return d; });
+  return Array.from({length:7}, (_, i) => {
+    const d = new Date(sun); d.setDate(sun.getDate() + i); return d;
+  });
 }
 const pad     = n => String(n).padStart(2,'0');
 const fmtDate = d => `${pad(d.getDate())}.${pad(d.getMonth()+1)}`;
@@ -238,7 +250,7 @@ const todayKey = dateKey(new Date());
 document.getElementById('week-range').textContent =
   `${fmtDate(days[0])} – ${fmtDate(days[6])}.${days[6].getFullYear()}`;
 
-// ── Live clock ──
+/* ── Clock ── */
 const clockEl = document.getElementById('clock');
 function updateClock() {
   const n = new Date();
@@ -247,7 +259,7 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 10000);
 
-// ── Build columns ──
+/* ── Build columns ── */
 const cal     = document.getElementById('cal');
 const evAreas = {};
 const cols    = [];
@@ -259,7 +271,6 @@ days.forEach((d, i) => {
 
   const col = document.createElement('div');
   col.className = 'day' + (isToday ? ' today' : '') + (isSat ? ' shabbat' : '');
-  col.dataset.idx = i;
 
   col.innerHTML = `
     <div class="day-inner">
@@ -276,29 +287,30 @@ days.forEach((d, i) => {
   evAreas[key] = col.querySelector('.events');
 });
 
-// ── Firebase listeners ──
+/* ── Firebase ── */
 days.forEach(d => {
   const key = dateKey(d);
   onValue(ref(db, `management/calendar/${key}`), snap => {
     const area = evAreas[key];
     area.innerHTML = '';
     if (!snap.exists()) { area.innerHTML = '<div class="no-ev">—</div>'; return; }
-    const evs = Object.values(snap.val()).sort((a,b) => (a.order||0)-(b.order||0));
-    evs.forEach(ev => {
-      const el = document.createElement('div');
-      el.className = 'ev';
-      el.innerHTML =
-        (ev.imageUrl ? `<img class="ev-img" src="${ev.imageUrl}" onerror="this.style.display='none'">` : '') +
-        `<div class="ev-body">` +
-        (ev.title    ? `<div class="ev-title">${ev.title}</div>`  : '') +
-        (ev.subtitle ? `<div class="ev-sub">${ev.subtitle}</div>` : '') +
-        `</div>`;
-      area.appendChild(el);
-    });
+    Object.values(snap.val())
+      .sort((a,b) => (a.order||0) - (b.order||0))
+      .forEach(ev => {
+        const el = document.createElement('div');
+        el.className = 'ev';
+        el.innerHTML =
+          (ev.imageUrl ? `<img class="ev-img" src="${ev.imageUrl}" onerror="this.style.display='none'">` : '') +
+          `<div class="ev-body">` +
+          (ev.title    ? `<div class="ev-title">${ev.title}</div>`  : '') +
+          (ev.subtitle ? `<div class="ev-sub">${ev.subtitle}</div>` : '') +
+          `</div>`;
+        area.appendChild(el);
+      });
   });
 });
 
-// ── Spotlight pulse — cycles through columns every 3.5 s ──
+/* ── Spotlight pulse ── */
 let spotIdx = days.findIndex(d => dateKey(d) === todayKey);
 if (spotIdx < 0) spotIdx = 0;
 
@@ -310,9 +322,9 @@ function nextSpotlight() {
 nextSpotlight();
 setInterval(nextSpotlight, 3500);
 
-// ── Reload at midnight ──
+/* ── Reload at midnight ── */
 const now      = new Date();
-const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
 setTimeout(() => location.reload(), midnight - now);
 </script>
 </body>
