@@ -12,31 +12,69 @@
       font-family: 'Segoe UI', 'Arial Hebrew', Arial, sans-serif;
     }
     body { background: url('../imgs/bg.png') center/cover no-repeat; }
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,20,0.74); }
+
+    /* Lighter overlay — lets bg breathe */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,4,20,0.58);
+    }
+
+    /* Ambient glow layer */
+    .overlay::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(30,80,200,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 80% 90%, rgba(80,20,180,0.14) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
     .root {
       position: relative; z-index: 1;
       display: flex; flex-direction: column;
-      height: 2160px; padding: 60px 68px 52px;
+      height: 2160px;
+      /* Large safe-zone padding — fixes TV overscan */
+      padding: 130px 140px 110px;
     }
 
     /* ── Header ── */
     .hdr {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 48px; flex-shrink: 0;
+      margin-bottom: 56px; flex-shrink: 0;
     }
-    .hdr-title { color: #fff; font-size: 72px; font-weight: 800; letter-spacing: -1px; }
-    .hdr-range { color: rgba(255,255,255,0.5); font-size: 44px; }
-    .hdr-brand { color: rgba(255,255,255,0.22); font-size: 32px; font-weight: 300; letter-spacing: 8px; }
+    .hdr-title {
+      font-size: 80px; font-weight: 900; letter-spacing: -1px;
+      background: linear-gradient(90deg, #fff 0%, #93c5fd 60%, #818cf8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hdr-center { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .hdr-clock  { color: rgba(255,255,255,0.9); font-size: 60px; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .hdr-range  { color: rgba(255,255,255,0.45); font-size: 38px; }
+    .hdr-brand  { color: rgba(255,255,255,0.28); font-size: 34px; font-weight: 300; letter-spacing: 10px; }
+
+    /* Thin glowing separator under header */
+    .hdr-sep {
+      height: 2px; margin-bottom: 40px; flex-shrink: 0;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(99,179,237,0.5) 20%,
+        rgba(167,139,250,0.6) 50%,
+        rgba(99,179,237,0.5) 80%,
+        transparent 100%);
+      border-radius: 2px;
+    }
 
     /* ── Calendar ── */
-    .cal { display: flex; gap: 20px; flex: 1; min-height: 0; }
+    .cal { display: flex; gap: 22px; flex: 1; min-height: 0; }
 
     /* ── Day column ── */
     .day {
       flex: 1; display: flex; flex-direction: column;
-      border-radius: 26px; overflow: visible;
-      background: rgba(255,255,255,0.055);
-      border: 1.5px solid rgba(255,255,255,0.08);
+      border-radius: 28px; overflow: visible;
+      background: rgba(255,255,255,0.085);
+      border: 1.5px solid rgba(255,255,255,0.16);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
       position: relative;
       transition:
         transform      0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -44,39 +82,43 @@
         border-color   0.5s ease,
         box-shadow     0.5s ease;
       transform-origin: bottom center;
-      /* clip overflow only on inner content, not shadow */
-      clip-path: none;
     }
     .day-inner {
-      display: flex; flex-direction: column; flex: 1; border-radius: 26px; overflow: hidden;
+      display: flex; flex-direction: column; flex: 1;
+      border-radius: 28px; overflow: hidden;
     }
-    .day.shabbat { background: rgba(0,25,80,0.3); border-color: rgba(70,110,255,0.2); }
 
-    /* Today — always visually strong */
+    .day.shabbat {
+      background: rgba(20,40,120,0.25);
+      border-color: rgba(99,130,255,0.3);
+    }
+
+    /* Today */
     .day.today {
-      background: rgba(60,120,255,0.12);
-      border-color: rgba(96,165,250,0.6);
-      box-shadow: 0 0 100px rgba(60,100,255,0.1);
+      background: rgba(59,130,246,0.15);
+      border-color: rgba(99,165,250,0.7);
+      box-shadow: 0 0 120px rgba(59,120,255,0.18), 0 4px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
     }
 
-    /* Spotlight pulse — cycles through days */
+    /* Spotlight pulse */
     .day.spotlight {
-      transform: scaleY(1.018) scaleX(1.025);
-      background: rgba(255,255,255,0.13);
-      border-color: rgba(255,255,255,0.35);
-      box-shadow: 0 12px 60px rgba(0,0,0,0.4), 0 0 80px rgba(255,255,255,0.07);
+      transform: scaleY(1.02) scaleX(1.028);
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,0.42);
+      box-shadow: 0 16px 80px rgba(0,0,0,0.45), 0 0 100px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.2);
       z-index: 3;
     }
     .day.today.spotlight {
-      background: rgba(60,130,255,0.22);
-      border-color: rgba(96,165,250,0.9);
-      box-shadow: 0 12px 60px rgba(0,0,0,0.4), 0 0 120px rgba(80,140,255,0.2);
+      background: rgba(59,140,255,0.25);
+      border-color: rgba(99,165,250,0.95);
+      box-shadow: 0 16px 80px rgba(0,0,0,0.4), 0 0 160px rgba(80,140,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
     }
 
     /* ── Day header ── */
     .day-hdr {
-      padding: 30px 20px 24px; text-align: center; color: #fff;
-      border-bottom: 1px solid rgba(255,255,255,0.09); flex-shrink: 0;
+      padding: 32px 24px 26px; text-align: center; color: #fff;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.12); flex-shrink: 0;
       position: relative;
     }
 
@@ -84,32 +126,31 @@
     .today-badge {
       display: none;
       position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
-      background: #3b82f6; color: #fff;
-      font-size: 22px; font-weight: 700; padding: 5px 22px;
-      border-radius: 20px; letter-spacing: 1px; white-space: nowrap;
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
+      color: #fff; font-size: 24px; font-weight: 800;
+      padding: 6px 26px; border-radius: 20px; letter-spacing: 1px; white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(59,130,246,0.5);
     }
     .today .today-badge { display: block; }
-    .today .day-hdr { padding-top: 54px; }
+    .today .day-hdr { padding-top: 62px; }
 
     .day-name {
-      font-size: 50px; font-weight: 800;
+      font-size: 54px; font-weight: 900; color: rgba(255,255,255,0.92);
       transition: color 0.4s;
     }
     .day-date {
-      font-size: 38px; margin-top: 10px; opacity: 0.5;
-      transition: opacity 0.4s, color 0.4s;
+      font-size: 40px; margin-top: 10px; color: rgba(255,255,255,0.45);
+      transition: color 0.4s;
     }
-    .today .day-name { color: #60a5fa; font-size: 54px; }
-    .today .day-date { opacity: 1; color: #93c5fd; font-size: 42px; }
+    .today .day-name { color: #60a5fa; font-size: 58px; }
+    .today .day-date { color: #93c5fd; font-size: 44px; }
 
-    /* Shimmer on today's header */
+    /* Shimmer */
     .today .day-hdr::after {
       content: '';
       position: absolute; inset: 0;
       background: linear-gradient(110deg,
-        transparent 30%,
-        rgba(255,255,255,0.08) 50%,
-        transparent 70%);
+        transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
       background-size: 200% 100%;
       animation: shimmer 3.5s ease-in-out infinite;
       pointer-events: none;
@@ -119,27 +160,35 @@
       100% { background-position: -200% 0; }
     }
 
-    /* ── Events ── */
+    /* ── Events area ── */
     .events {
-      flex: 1; overflow: hidden; padding: 20px 16px;
-      display: flex; flex-direction: column; gap: 16px;
+      flex: 1; overflow: hidden; padding: 22px 18px;
+      display: flex; flex-direction: column; gap: 18px;
     }
 
     /* ── Event card ── */
     .ev {
-      background: rgba(255,255,255,0.09); border-radius: 16px;
-      overflow: hidden; flex-shrink: 0;
-      transition: background 0.4s;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 18px; overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+      transition: background 0.4s, border-color 0.4s;
     }
-    .spotlight .ev { background: rgba(255,255,255,0.13); }
+    .spotlight .ev {
+      background: rgba(255,255,255,0.16);
+      border-color: rgba(255,255,255,0.28);
+    }
     .ev-img  { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
-    .ev-body { padding: 14px 18px 18px; }
-    .ev-title { font-size: 30px; font-weight: 700; color: #fff; line-height: 1.25; }
-    .ev-sub   { font-size: 24px; color: rgba(255,255,255,0.6); margin-top: 8px; line-height: 1.35; }
-    .no-ev    { color: rgba(255,255,255,0.14); font-size: 26px; text-align: center; margin-top: 44px; }
-
-    /* ── Clock & date in header ── */
-    .hdr-clock { color: rgba(255,255,255,0.7); font-size: 48px; font-variant-numeric: tabular-nums; }
+    .ev-body { padding: 16px 20px 20px; }
+    .ev-title {
+      font-size: 32px; font-weight: 800; color: #fff; line-height: 1.25;
+    }
+    .ev-sub {
+      font-size: 26px; color: rgba(255,255,255,0.65); margin-top: 10px; line-height: 1.35;
+    }
+    .no-ev {
+      color: rgba(255,255,255,0.18); font-size: 28px; text-align: center; margin-top: 50px;
+    }
   </style>
 </head>
 <body>
@@ -147,10 +196,13 @@
 <div class="root">
   <div class="hdr">
     <div class="hdr-title">לוח אירועים שבועי</div>
-    <div class="hdr-clock" id="clock"></div>
-    <div class="hdr-range" id="week-range"></div>
+    <div class="hdr-center">
+      <div class="hdr-clock" id="clock"></div>
+      <div class="hdr-range" id="week-range"></div>
+    </div>
     <div class="hdr-brand">TECHNODA</div>
   </div>
+  <div class="hdr-sep"></div>
   <div class="cal" id="cal"></div>
 </div>
 
@@ -196,14 +248,14 @@ updateClock();
 setInterval(updateClock, 10000);
 
 // ── Build columns ──
-const cal    = document.getElementById('cal');
+const cal     = document.getElementById('cal');
 const evAreas = {};
-const cols   = [];
+const cols    = [];
 
 days.forEach((d, i) => {
-  const key      = dateKey(d);
-  const isToday  = key === todayKey;
-  const isSat    = i === 6;
+  const key     = dateKey(d);
+  const isToday = key === todayKey;
+  const isSat   = i === 6;
 
   const col = document.createElement('div');
   col.className = 'day' + (isToday ? ' today' : '') + (isSat ? ' shabbat' : '');
@@ -247,7 +299,7 @@ days.forEach(d => {
 });
 
 // ── Spotlight pulse — cycles through columns every 3.5 s ──
-let spotIdx = days.findIndex((d, i) => dateKey(d) === todayKey);
+let spotIdx = days.findIndex(d => dateKey(d) === todayKey);
 if (spotIdx < 0) spotIdx = 0;
 
 function nextSpotlight() {
