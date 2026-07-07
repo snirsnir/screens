@@ -40,6 +40,7 @@ const userEmailDisplay  = document.getElementById('user-email-display');
 const btnSignout        = document.getElementById('btn-signout');
 const btnSignoutUnauth  = document.getElementById('btn-signout-unauth');
 const btnManageAdmins   = document.getElementById('btn-manage-admins');
+const btnTheme          = document.getElementById('btn-theme');
 const adminModal        = document.getElementById('admin-modal');
 const adminListEl       = document.getElementById('admin-list');
 const newAdminName      = document.getElementById('new-admin-name');
@@ -93,6 +94,19 @@ btnGoogleSignin.addEventListener('click', async () => {
 });
 btnSignout.addEventListener('click',       () => signOut(auth));
 btnSignoutUnauth.addEventListener('click', () => signOut(auth));
+
+/* ─── Light / Dark mode toggle ─── */
+(function initTheme() {
+  if (localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light-mode');
+    btnTheme.textContent = '🌙';
+  }
+})();
+btnTheme.addEventListener('click', () => {
+  const isLight = document.body.classList.toggle('light-mode');
+  btnTheme.textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+});
 
 /* ─── Admin management ─── */
 btnManageAdmins.addEventListener('click', () => { adminModal.classList.remove('hidden'); renderAdminList(); });

@@ -4,6 +4,7 @@
 :root {
   --bg:       #0a0f1e;
   --surface:  #111827;
+  --surface2: #1a2438;
   --card:     #1e293b;
   --border:   #2d3748;
   --accent:   #3b82f6;
@@ -14,6 +15,21 @@
   --text:     #f1f5f9;
   --muted:    #94a3b8;
   --sidebar-w: 260px;
+}
+
+body.light-mode {
+  --bg:       #f0f4ff;
+  --surface:  #ffffff;
+  --surface2: #e8edf8;
+  --card:     #f1f5f9;
+  --border:   #cbd5e1;
+  --accent:   #3b82f6;
+  --accent2:  #2563eb;
+  --success:  #16a34a;
+  --warning:  #d97706;
+  --danger:   #dc2626;
+  --text:     #0f172a;
+  --muted:    #64748b;
 }
 
 body {
@@ -1577,6 +1593,7 @@ body.sidebar-open .sidebar-backdrop {
 /* ── Day-of-week header row ── */
 .cal-dow-row {
   display: grid; grid-template-columns: repeat(7,1fr);
+  direction: ltr;
   gap: 3px; margin-bottom: 3px;
 }
 .cal-dow-row > div {
@@ -1587,6 +1604,7 @@ body.sidebar-open .sidebar-backdrop {
 /* ── Calendar grid ── */
 .cal-grid {
   display: grid; grid-template-columns: repeat(7,1fr);
+  direction: ltr;
   gap: 3px; margin-bottom: 14px;
 }
 .cal-day {
