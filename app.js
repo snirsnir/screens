@@ -431,180 +431,240 @@ function selectScreen(id) {
    Calendar management (management screen)
 ═══════════════════════════════════════════ */
 (function initCalendarWizard() {
-  const calDateInput  = document.getElementById('cal-date');
-  const calEventsList = document.getElementById('cal-events-list');
-  const calTitle      = document.getElementById('cal-ev-title');
-  const calSub        = document.getElementById('cal-ev-sub');
-  const calImgUrl     = document.getElementById('cal-ev-img');
-  const calFile       = document.getElementById('cal-ev-file');
-  const calImgPrev    = document.getElementById('cal-img-preview');
-  const calImgEl      = document.getElementById('cal-img-preview-el');
-  const calAddBtn     = document.getElementById('cal-add-ev-btn');
+  const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני',
+                     'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  const pad     = n => String(n).padStart(2,'0');
+  const dateKey = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
+  const todayKey = new Date().toISOString().slice(0,10);
 
-  // Default date = today
-  const todayStr = new Date().toISOString().slice(0, 10);
-  calDateInput.value = todayStr;
+  const calGrid      = document.getElementById('cal-grid');
+  const monthLabel   = document.getElementById('cal-month-label');
+  const calTitle     = document.getElementById('cal-ev-title');
+  const calSub       = document.getElementById('cal-ev-sub');
+  const calImgUrl    = document.getElementById('cal-ev-img');
+  const calFile      = document.getElementById('cal-ev-file');
+  const calImgPrev   = document.getElementById('cal-img-preview');
+  const calImgEl     = document.getElementById('cal-img-preview-el');
+  const calAddBtn    = document.getElementById('cal-add-ev-btn');
+  const modalOverlay = document.getElementById('cal-modal-overlay');
+  const modalDateLbl = document.getElementById('cal-modal-date-lbl');
 
-  let calUnsubscribe = null;
+  let viewYear  = new Date().getFullYear();
+  let viewMonth = new Date().getMonth();
+  let calData   = {};          // dateKey → {pushKey: ev}
+  let calUnsub  = null;
+  let modalDate = null;        // currently open date
 
-  // Re-render event list whenever step becomes active
-  const origShowWizStep = showWizStep;
-  // We'll hook into showWizStep to trigger calendar load
-  // (patched below after showWizStep is defined — see bottom of this IIFE)
-
-  function loadCalendarForDate(dateStr) {
-    if (calUnsubscribe) { calUnsubscribe(); calUnsubscribe = null; }
-    if (!dateStr) return;
-    calEventsList.innerHTML = '<div class="cal-empty-msg">טוען...</div>';
-    const dbRef = ref(db, `management/calendar/${dateStr}`);
-    calUnsubscribe = onValue(dbRef, snap => {
-      calEventsList.innerHTML = '';
-      if (!snap.exists()) {
-        calEventsList.innerHTML = '<div class="cal-empty-msg">אין אירועים לתאריך זה</div>';
-        return;
-      }
-      Object.entries(snap.val())
-        .sort(([,a],[,b]) => (a.order||0)-(b.order||0))
-        .forEach(([key, ev]) => {
-          const card = document.createElement('div');
-          card.className = 'cal-event-card';
-          card.innerHTML =
-            (ev.imageUrl ? `<img class="cal-event-thumb" src="${ev.imageUrl}" onerror="this.style.display='none'">` : '') +
-            `<div class="cal-event-info">
-               <div class="cal-event-title">${ev.title||''}</div>
-               ${ev.subtitle ? `<div class="cal-event-sub">${ev.subtitle}</div>` : ''}
-             </div>
-             <button data-key="${key}" data-date="${dateStr}" class="cal-del-btn cal-event-del">✕ מחק</button>`;
-          calEventsList.appendChild(card);
-        });
-
-      calEventsList.querySelectorAll('.cal-del-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (!confirm('למחוק אירוע זה?')) return;
-          await remove(ref(db, `management/calendar/${btn.dataset.date}/${btn.dataset.key}`));
-          showToast('אירוע נמחק', 'success');
-        });
-      });
+  // ── Subscribe to ALL calendar data once ──
+  function subscribeCalendar() {
+    if (calUnsub) calUnsub();
+    calUnsub = onValue(ref(db, 'management/calendar'), snap => {
+      calData = snap.exists() ? snap.val() : {};
+      renderGrid();
     });
   }
 
-  calDateInput.addEventListener('change', () => loadCalendarForDate(calDateInput.value));
+  // ── Render month grid ──
+  function renderGrid() {
+    monthLabel.textContent = `${MONTHS_HE[viewMonth]} ${viewYear}`;
+    calGrid.innerHTML = '';
 
-  // Enable add button only when title is filled
-  calTitle.addEventListener('input', () => {
-    calAddBtn.disabled = !calTitle.value.trim();
-  });
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const prevDays    = new Date(viewYear, viewMonth, 0).getDate();
 
-  // Image file upload → Firebase Storage → fill URL input
+    // Trailing cells from prev month
+    for (let i = 0; i < firstDay; i++) {
+      const d = prevDays - firstDay + 1 + i;
+      const [py, pm] = viewMonth === 0 ? [viewYear-1, 11] : [viewYear, viewMonth-1];
+      calGrid.appendChild(makeDayCell(py, pm, d, true));
+    }
+    // This month
+    for (let d = 1; d <= daysInMonth; d++) {
+      calGrid.appendChild(makeDayCell(viewYear, viewMonth, d, false));
+    }
+    // Leading cells for next month
+    const total = firstDay + daysInMonth;
+    const rem   = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let d = 1; d <= rem; d++) {
+      const [ny, nm] = viewMonth === 11 ? [viewYear+1, 0] : [viewYear, viewMonth+1];
+      calGrid.appendChild(makeDayCell(ny, nm, d, true));
+    }
+  }
+
+  function makeDayCell(y, m, d, otherMonth) {
+    const key    = dateKey(y, m, d);
+    const events = calData[key] ? Object.entries(calData[key]) : [];
+    const isToday = key === todayKey;
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' +
+      (otherMonth ? ' cal-day--other' : '') +
+      (isToday    ? ' cal-day--today' : '');
+
+    const numEl = document.createElement('div');
+    numEl.className = 'cal-day-num';
+    numEl.textContent = d;
+    cell.appendChild(numEl);
+
+    const chips = document.createElement('div');
+    chips.className = 'cal-day-chips';
+    events.sort(([,a],[,b]) => (a.order||0)-(b.order||0)).forEach(([evKey, ev]) => {
+      const chip = document.createElement('div');
+      chip.className = 'cal-day-chip';
+      chip.title = ev.subtitle || '';
+      chip.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${ev.title||''}</span>
+        <button class="cal-day-chip-del" data-key="${evKey}" data-date="${key}" title="מחק">✕</button>`;
+      chip.querySelector('.cal-day-chip-del').addEventListener('click', async e => {
+        e.stopPropagation();
+        if (!confirm('למחוק?')) return;
+        await remove(ref(db, `management/calendar/${key}/${evKey}`));
+        showToast('אירוע נמחק', 'success');
+      });
+      chips.appendChild(chip);
+    });
+    cell.appendChild(chips);
+
+    // "+" add button
+    const addBtn = document.createElement('button');
+    addBtn.className = 'cal-day-add';
+    addBtn.title = 'הוסף אירוע';
+    addBtn.textContent = '+';
+    addBtn.addEventListener('click', e => { e.stopPropagation(); openModal(key, y, m, d); });
+    cell.appendChild(addBtn);
+
+    return cell;
+  }
+
+  // ── Modal ──
+  function openModal(key, y, m, d) {
+    modalDate = key;
+    modalDateLbl.textContent = `${d} ${MONTHS_HE[m]} ${y}`;
+    calTitle.value  = '';
+    calSub.value    = '';
+    calImgUrl.value = '';
+    calFile.value   = '';
+    calImgPrev.classList.add('hidden');
+    calAddBtn.disabled = true;
+    modalOverlay.classList.remove('hidden');
+    calTitle.focus();
+  }
+
+  function closeModal() {
+    modalOverlay.classList.add('hidden');
+    modalDate = null;
+  }
+
+  document.getElementById('cal-modal-close').addEventListener('click', closeModal);
+  document.getElementById('cal-modal-cancel').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+
+  // Enable save button when title filled
+  calTitle.addEventListener('input', () => { calAddBtn.disabled = !calTitle.value.trim(); });
+
+  // File upload
   calFile.addEventListener('change', async () => {
     const file = calFile.files[0];
     if (!file) return;
     calAddBtn.disabled = true;
-    calAddBtn.querySelector('span:last-child').textContent = 'מעלה...';
+    calAddBtn.textContent = 'מעלה...';
     try {
       const path = `management-calendar/${Date.now()}_${file.name}`;
-      const snap  = await new Promise((res, rej) => {
+      const snap = await new Promise((res, rej) => {
         const task = uploadBytesResumable(sRef(storage, path), file);
         task.on('state_changed', null, rej, () => res(task.snapshot));
       });
       const url = await getDownloadURL(snap.ref);
       calImgUrl.value = url;
-      calImgEl.src = url;
+      calImgEl.src    = url;
       calImgPrev.classList.remove('hidden');
     } catch(e) {
-      showToast('שגיאה בהעלאת תמונה: ' + e.message, 'error');
+      showToast('שגיאה: ' + e.message, 'error');
     } finally {
       calAddBtn.disabled = !calTitle.value.trim();
-      calAddBtn.querySelector('span:last-child').textContent = 'הוסף אירוע';
+      calAddBtn.textContent = 'הוסף אירוע';
     }
   });
 
-  // Preview image URL as typed
+  // Image URL preview
   calImgUrl.addEventListener('input', () => {
     const v = calImgUrl.value.trim();
     if (v) { calImgEl.src = v; calImgPrev.classList.remove('hidden'); }
     else calImgPrev.classList.add('hidden');
   });
 
-  // Add event
+  // Save event
   calAddBtn.addEventListener('click', async () => {
-    const dateStr = calDateInput.value;
-    if (!dateStr || !calTitle.value.trim()) return;
+    if (!modalDate || !calTitle.value.trim()) return;
     calAddBtn.disabled = true;
-    calAddBtn.querySelector('span:last-child').textContent = 'שומר...';
+    calAddBtn.textContent = 'שומר...';
     try {
-      // Count existing events for order
-      const snap = await get(ref(db, `management/calendar/${dateStr}`));
+      const snap  = await get(ref(db, `management/calendar/${modalDate}`));
       const order = snap.exists() ? Object.keys(snap.val()).length : 0;
-      await push(ref(db, `management/calendar/${dateStr}`), {
+      await push(ref(db, `management/calendar/${modalDate}`), {
         title:    calTitle.value.trim(),
-        subtitle: calSub.value.trim() || null,
-        imageUrl: calImgUrl.value.trim() || null,
+        subtitle: calSub.value.trim()   || null,
+        imageUrl: calImgUrl.value.trim()|| null,
         order,
       });
-      calTitle.value = '';
-      calSub.value   = '';
-      calImgUrl.value = '';
-      calImgPrev.classList.add('hidden');
-      calFile.value  = '';
       showToast('אירוע נוסף ✓', 'success');
+      closeModal();
     } catch(e) {
       showToast('שגיאה: ' + e.message, 'error');
     } finally {
-      calAddBtn.disabled = true;
-      calAddBtn.querySelector('span:last-child').textContent = 'הוסף אירוע';
+      calAddBtn.disabled = false;
+      calAddBtn.textContent = 'הוסף אירוע';
     }
   });
 
-  // Activate calendar on screen
+  // Month navigation
+  document.getElementById('cal-prev-month').addEventListener('click', () => {
+    if (viewMonth === 0) { viewMonth = 11; viewYear--; } else viewMonth--;
+    renderGrid();
+  });
+  document.getElementById('cal-next-month').addEventListener('click', () => {
+    if (viewMonth === 11) { viewMonth = 0; viewYear++; } else viewMonth++;
+    renderGrid();
+  });
+
+  // Activate button
   document.getElementById('cal-activate-btn').addEventListener('click', async () => {
-    const btn      = document.getElementById('cal-activate-btn');
-    const iconEl   = document.getElementById('cal-activate-icon');
-    const textEl   = document.getElementById('cal-activate-text');
-    btn.disabled   = true;
-    textEl.textContent = 'שולח...';
+    const btn    = document.getElementById('cal-activate-btn');
+    const iconEl = document.getElementById('cal-activate-icon');
+    const textEl = document.getElementById('cal-activate-text');
+    btn.disabled = true; textEl.textContent = 'שולח...';
     try {
       await set(ref(db, 'screens/management/content'), {
-        type:      'url',
-        url:       'https://snirsnir.github.io/screens/management/',
-        embedUrl:  'https://snirsnir.github.io/screens/management/',
-        filename:  'לוח שנה מנהלה',
-        updatedAt: Date.now(),
+        type: 'url', url: 'https://snirsnir.github.io/screens/management/',
+        embedUrl: 'https://snirsnir.github.io/screens/management/',
+        filename: 'לוח שנה מנהלה', updatedAt: Date.now(),
       });
-      iconEl.textContent = '✅';
-      textEl.textContent = 'הופעל!';
       showToast('לוח השנה מוצג על המסך ✓', 'success');
-      setTimeout(() => { iconEl.textContent = '📡'; textEl.textContent = 'הפעל עכשיו'; btn.disabled = false; }, 3000);
     } catch(e) {
       showToast('שגיאה: ' + e.message, 'error');
-      textEl.textContent = 'הפעל עכשיו'; iconEl.textContent = '📡'; btn.disabled = false;
+      iconEl.textContent = '📡'; textEl.textContent = 'הפעל עכשיו'; btn.disabled = false;
     }
   });
 
-  // ── Banner: live status from Firebase ──
-  const banner    = document.getElementById('cal-activate-banner');
+  // Banner live status
+  const banner      = document.getElementById('cal-activate-banner');
   const bannerTitle = document.getElementById('cal-banner-title');
   const bannerSub   = document.getElementById('cal-banner-sub');
-
   onValue(ref(db, 'screens/management/content'), snap => {
-    const content = snap.exists() ? snap.val() : null;
-    const isCalActive = content && content.type === 'url' &&
-      (content.url || '').includes('management');
-
-    banner.classList.toggle('cal-activate-banner--on',  isCalActive);
-    banner.classList.toggle('cal-activate-banner--off', !isCalActive);
-
-    if (isCalActive) {
-      bannerTitle.textContent = '✅ לוח שנה על המסך';
-      bannerSub.textContent   = 'מופעל כעת — הלוח מוצג על מסך המנהלה';
-    } else {
-      bannerTitle.textContent = '📺 לוח שנה על המסך';
-      bannerSub.textContent   = 'לחץ להפעלה — לוח השנה יוצג על מסך המנהלה';
-    }
+    const c = snap.exists() ? snap.val() : null;
+    const on = c && c.type === 'url' && (c.url||'').includes('management');
+    banner.classList.toggle('cal-activate-banner--on',  on);
+    banner.classList.toggle('cal-activate-banner--off', !on);
+    bannerTitle.textContent = on ? '✅ לוח שנה על המסך' : '📺 לוח שנה על המסך';
+    bannerSub.textContent   = on ? 'מופעל כעת — הלוח מוצג על מסך המנהלה'
+                                 : 'לחץ להפעלה — לוח השנה יוצג על מסך המנהלה';
+    const btn = document.getElementById('cal-activate-btn');
+    if (on) { document.getElementById('cal-activate-icon').textContent='✅'; document.getElementById('cal-activate-text').textContent='הופעל!'; btn.disabled=true; }
+    else    { document.getElementById('cal-activate-icon').textContent='📡'; document.getElementById('cal-activate-text').textContent='הפעל עכשיו'; btn.disabled=false; }
   });
 
-  // Hook: load calendar when calendar step is shown
-  window._calendarStepHook = () => loadCalendarForDate(calDateInput.value);
+  // Hook: subscribe when step is opened
+  window._calendarStepHook = () => subscribeCalendar();
 })();
 
 libraryNavItem.addEventListener('click', showLibraryPage);

@@ -42,17 +42,26 @@
     }
 
     .hdr-title {
-      font-size: 2.3vw; font-weight: 900; letter-spacing: -0.05vw;
+      font-size: 2.5vw; font-weight: 900; letter-spacing: -0.05vw;
       color: #1e3a5f;
     }
 
-    .hdr-center { display: flex; flex-direction: column; align-items: center; gap: 0.1vh; }
+    .hdr-center {
+      display: flex; flex-direction: column; align-items: center; gap: 0.2vh;
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.9);
+      border-radius: 1.2vw;
+      padding: 0.7vh 2vw;
+      box-shadow: 0 0.3vh 1.5vw rgba(30,58,95,0.1);
+    }
 
     .hdr-clock {
-      font-size: 2.1vw; font-weight: 700; color: #1e3a5f;
-      font-variant-numeric: tabular-nums; letter-spacing: 0.1vw;
+      font-size: 2.6vw; font-weight: 900; color: #1e3a5f;
+      font-variant-numeric: tabular-nums; letter-spacing: 0.15vw;
+      line-height: 1;
     }
-    .hdr-date { font-size: 0.9vw; font-weight: 400; color: #5a7fa8; }
+    .hdr-date { font-size: 0.85vw; font-weight: 500; color: #5a7fa8; letter-spacing: 0.02vw; }
 
     .hdr-logo {
       height: 5.5vh; width: auto; object-fit: contain;
@@ -238,7 +247,7 @@
 <div class="overlay"></div>
 <div class="root">
   <div class="hdr">
-    <div class="hdr-title">לוח אירועים דו-שבועי</div>
+    <div class="hdr-title">אז מה הולך לקרות בטכנודע? 🚀</div>
     <div class="hdr-center">
       <div class="hdr-clock" id="clock">00:00</div>
       <div class="hdr-date"  id="hdr-date"></div>
@@ -312,11 +321,15 @@ document.getElementById('range-next').textContent =
 document.getElementById('hdr-date').textContent =
   `${fmtDate(weekCurrent[0])} – ${fmtDate(weekNext[6])}.${weekNext[6].getFullYear()}`;
 
-/* ── Clock ── */
-const clockEl = document.getElementById('clock');
+/* ── Clock + date ── */
+const clockEl  = document.getElementById('clock');
+const hdrDate  = document.getElementById('hdr-date');
+const DAYS_HE  = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const MONTHS_HE= ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 function updateClock() {
   const n = new Date();
   clockEl.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  hdrDate.textContent = `יום ${DAYS_HE[n.getDay()]}, ${n.getDate()} ב${MONTHS_HE[n.getMonth()]} ${n.getFullYear()}`;
 }
 updateClock();
 setInterval(updateClock, 10000);

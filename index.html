@@ -240,33 +240,21 @@
       <!-- Step: Calendar management (management screen only) -->
       <div id="wiz-calendar" class="wiz-step hidden">
 
-        <!-- Date picker card -->
-        <div class="cal-date-card">
-          <div class="cal-date-label">📅 בחר תאריך לעריכה</div>
-          <input type="date" id="cal-date" class="cal-date-input">
+        <!-- Month navigation -->
+        <div class="cal-month-nav">
+          <button class="cal-month-btn" id="cal-prev-month">&#8249;</button>
+          <div class="cal-month-label" id="cal-month-label"></div>
+          <button class="cal-month-btn" id="cal-next-month">&#8250;</button>
         </div>
 
-        <!-- Events for selected date -->
-        <div class="cal-section-title">אירועים ביום שנבחר</div>
-        <div id="cal-events-list" class="cal-events-list"></div>
-
-        <!-- Add event form -->
-        <div class="cal-add-form">
-          <div class="cal-add-form-title">➕ הוספת אירוע חדש</div>
-          <input type="text" id="cal-ev-title" class="cal-input" placeholder="כותרת *">
-          <input type="text" id="cal-ev-sub"   class="cal-input" placeholder="תת כותרת (אופציונלי)">
-          <div class="cal-img-row">
-            <input type="url" id="cal-ev-img" class="cal-input" placeholder="קישור לתמונה (אופציונלי)">
-            <label class="cal-upload-btn" title="העלה מהמחשב">
-              📁 העלה
-              <input type="file" id="cal-ev-file" accept="image/*" style="display:none;">
-            </label>
-          </div>
-          <div id="cal-img-preview" class="cal-img-preview hidden">
-            <img id="cal-img-preview-el" class="cal-img-preview-img">
-          </div>
-          <button id="cal-add-ev-btn" class="cal-add-btn" disabled>הוסף אירוע</button>
+        <!-- Day-of-week headers -->
+        <div class="cal-dow-row">
+          <div>ראשון</div><div>שני</div><div>שלישי</div>
+          <div>רביעי</div><div>חמישי</div><div>שישי</div><div>שבת</div>
         </div>
+
+        <!-- Calendar grid (days filled by JS) -->
+        <div class="cal-grid" id="cal-grid"></div>
 
         <!-- Activate banner — at bottom, status-aware -->
         <div id="cal-activate-banner" class="cal-activate-banner cal-activate-banner--off">
@@ -280,6 +268,37 @@
           </button>
         </div>
 
+      </div>
+
+      <!-- Add-event modal (outside wiz-calendar so it overlays everything) -->
+      <div id="cal-modal-overlay" class="cal-modal-overlay hidden">
+        <div class="cal-modal">
+          <div class="cal-modal-hdr">
+            <div>
+              <div class="cal-modal-title">➕ הוספת אירוע</div>
+              <div class="cal-modal-date-lbl" id="cal-modal-date-lbl"></div>
+            </div>
+            <button class="cal-modal-close" id="cal-modal-close">✕</button>
+          </div>
+          <div class="cal-modal-body">
+            <input type="text" id="cal-ev-title" class="cal-input" placeholder="כותרת *">
+            <input type="text" id="cal-ev-sub"   class="cal-input" placeholder="תת כותרת (אופציונלי)">
+            <div class="cal-img-row">
+              <input type="url" id="cal-ev-img" class="cal-input" placeholder="קישור לתמונה (אופציונלי)">
+              <label class="cal-upload-btn">
+                📁 העלה
+                <input type="file" id="cal-ev-file" accept="image/*" style="display:none;">
+              </label>
+            </div>
+            <div id="cal-img-preview" class="cal-img-preview hidden">
+              <img id="cal-img-preview-el" class="cal-img-preview-img">
+            </div>
+          </div>
+          <div class="cal-modal-footer">
+            <button id="cal-modal-cancel" class="cal-modal-cancel-btn">ביטול</button>
+            <button id="cal-add-ev-btn"   class="cal-modal-save-btn" disabled>הוסף אירוע</button>
+          </div>
+        </div>
       </div>
 
       <!-- Step: Content selection + broadcast -->
