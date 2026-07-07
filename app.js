@@ -557,8 +557,32 @@ function selectScreen(id) {
     }
   });
 
+  // Activate calendar on screen
+  document.getElementById('cal-activate-btn').addEventListener('click', async () => {
+    const btn      = document.getElementById('cal-activate-btn');
+    const iconEl   = document.getElementById('cal-activate-icon');
+    const textEl   = document.getElementById('cal-activate-text');
+    btn.disabled   = true;
+    textEl.textContent = 'שולח...';
+    try {
+      await set(ref(db, 'screens/management/content'), {
+        type:      'url',
+        url:       'https://snirsnir.github.io/screens/management/',
+        embedUrl:  'https://snirsnir.github.io/screens/management/',
+        filename:  'לוח שנה מנהלה',
+        updatedAt: Date.now(),
+      });
+      iconEl.textContent = '✅';
+      textEl.textContent = 'הופעל!';
+      showToast('לוח השנה מוצג על המסך ✓', 'success');
+      setTimeout(() => { iconEl.textContent = '📡'; textEl.textContent = 'הפעל עכשיו'; btn.disabled = false; }, 3000);
+    } catch(e) {
+      showToast('שגיאה: ' + e.message, 'error');
+      textEl.textContent = 'הפעל עכשיו'; iconEl.textContent = '📡'; btn.disabled = false;
+    }
+  });
+
   // Hook: load calendar when calendar step is shown
-  const _origShowWizStep = showWizStep;
   window._calendarStepHook = () => loadCalendarForDate(calDateInput.value);
 })();
 
@@ -711,6 +735,12 @@ function renderCurrentPreview(content) {
       html = `<iframe src="${content.url}#toolbar=0&navpanes=0" frameborder="0" style="width:100%;height:100%;"></iframe>`; break;
     case 'webpage':
       html = `<iframe src="${content.url}" frameborder="0" style="width:100%;height:100%;"></iframe>`; break;
+    case 'url': {
+      const src = content.embedUrl || content.url || '';
+      html = `<iframe id="url-preview-frame" src="${src}" frameborder="0"
+        style="position:absolute;top:0;left:0;border:none;pointer-events:none;transform-origin:top left;"
+        scrolling="no"></iframe>`; break;
+    }
     case 'playlist': {
       const count = (content.items || []).length;
       html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;">
@@ -722,6 +752,25 @@ function renderCurrentPreview(content) {
   currentPreview.innerHTML = html;
   const vid = currentPreview.querySelector('video');
   if (vid) vid.play().catch(() => {});
+
+  if (content.type === 'url') {
+    const frame = currentPreview.querySelector('#url-preview-frame');
+    if (frame) {
+      // Page is 4K: 3840×2160. Scale iframe to fit the preview box.
+      const PAGE_W = 3840, PAGE_H = 2160;
+      const scaleUrlFrame = () => {
+        const bw = currentPreview.clientWidth  || 320;
+        const bh = currentPreview.clientHeight || 180;
+        const scale = Math.min(bw / PAGE_W, bh / PAGE_H);
+        frame.style.width  = PAGE_W + 'px';
+        frame.style.height = PAGE_H + 'px';
+        frame.style.transform = `scale(${scale})`;
+      };
+      scaleUrlFrame();
+      // Re-scale if container resizes
+      new ResizeObserver(scaleUrlFrame).observe(currentPreview);
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════
